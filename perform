@@ -1,0 +1,38 @@
+       IDENTIFICATION                     DIVISION.
+      ****************************************************************** 
+       PROGRAM-ID. PERFORM1.
+       AUTHOR. ALEXANDRE KERESTES.
+      ******************************************************************
+       ENVIRONMENT                        DIVISION.
+      ******************************************************************
+       DATA                               DIVISION.
+      ******************************************************************
+       WORKING-STORAGE              SECTION.
+      *-----------------------------------------------------------------
+       01  WS-BOOL PIC X(4).
+           88 WS-BOOL-CONT VALUE 'CONT'.
+           88 WS-BOOL-STOP VALUE 'STOP'.
+      *     
+       01  WS-CPT PIC 9(2) COMP VALUE ZEROS.
+      ******************************************************************
+       PROCEDURE                          DIVISION.
+      ******************************************************************
+           PERFORM INITIALISATION
+           PERFORM TRAITEMENT UNTIL WS-BOOL-STOP 
+           PERFORM FIN
+           STOP RUN.
+      *
+       INITIALISATION.
+           DISPLAY 'INITIALISATION DU PROGRAMME'
+           SET WS-BOOL-CONT TO TRUE.
+      *
+       TRAITEMENT.
+           DISPLAY 'TRAITEMENT'
+           DISPLAY 'COMPTEUR = ' WS-CPT
+           ADD 1 TO WS-CPT
+           IF WS-CPT = 5
+             SET WS-BOOL-STOP TO TRUE
+           END-IF.
+      *        
+       FIN.
+           DISPLAY 'FIN DU PROGRAMME'.
