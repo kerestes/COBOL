@@ -1,7 +1,7 @@
        IDENTIFICATION                      DIVISION.
        PROGRAM-ID. EXERCICE_1.
        AUTHOR. KERESTES
-       DATE-WRITTEN. JUNE 6, 2022.
+       DATE-WRITTEN. JUNE 17, 2022.
       ******************************************************************
       *                                                                *
       *    LE PROGRAMME RECOIS UNE LISTE DE NOMBRES ET N'AFFICHE QUE   *
