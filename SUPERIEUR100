@@ -34,21 +34,29 @@
        PROCEDURE                           DIVISION.
       ******************************************************************
            OPEN INPUT CHIFFRE.
+          * 
            PERFORM UNTIL WS-EOF = 'Y'
+          * 
               READ CHIFFRE INTO WS-NUM
               AT END MOVE 'Y' TO WS-EOF
               NOT AT END IF WS-NUM > 99
                     MOVE WS-NUM TO WS-CENT(WS-CONTEUR)
                     ADD 1 TO WS-CONTEUR
-              END-IF 
+              END-IF
+          *    
               END-READ
+          *    
            END-PERFORM.
-           DISPLAY WS-NUM.
+          * 
            CLOSE CHIFFRE.
+          * 
            MOVE WS-CONTEUR TO WS-CONTEUR-FIN.
+          * 
            MOVE 1 TO WS-CONTEUR.
+          * 
            PERFORM UNTIL WS-CONTEUR = WS-CONTEUR-FIN
               DISPLAY WS-CENT(WS-CONTEUR), SPACE, SPACE
               ADD 1 TO WS-CONTEUR
            END-PERFORM.
+          * 
            STOP RUN.
