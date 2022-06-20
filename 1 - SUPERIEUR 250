@@ -5,7 +5,7 @@
       ******************************************************************
       *                                                                *
       *    LE PROGRAMME RECOIS UNE LISTE DE NOMBRES ET N'AFFICHE QUE   *
-      *                  LES SUPERIERES A 100.                         *
+      *                  LEs SUPERIERES A 250.                         *
       *                                                                *
       ******************************************************************
        ENVIRONMENT                         DIVISION.
@@ -13,7 +13,7 @@
        INPUT-OUTPUT             SECTION.
       *-----------------------------------------------------------------
        FILE-CONTROL.
-           SELECT CHIFFRE ASSIGN TO 'input.txt'
+           SELECT CHIFFRE ASSIGN TO "liste_nombre.seq"
            ORGANIZATION IS SEQUENTIAL.
       ******************************************************************
        DATA                                DIVISION.
@@ -21,42 +21,23 @@
        FILE                     SECTION.
       *-----------------------------------------------------------------
        FD  CHIFFRE.
-       01  NOMBRE PIC 9(5).
+       01 NOMBRE PIC 9(3).
       *-----------------------------------------------------------------
        WORKING-STORAGE          SECTION.
       *-----------------------------------------------------------------
-       01  WS-NUM PIC 9(5).
-       01  WS-CENT PIC 9(5) OCCURS 20 TIMES.
+       01  WS-NUM PIC 9(3).
        01  WS-EOF PIC A(1).
-       01  WS-CONTEUR PIC 9(3) VALUE 1.
-       01  WS-CONTEUR-FIN PIC 9(3) VALUE ZEROS.
       ******************************************************************
        PROCEDURE                           DIVISION.
       ******************************************************************
            OPEN INPUT CHIFFRE.
-          * 
+      *
            PERFORM UNTIL WS-EOF = 'Y'
-          * 
               READ CHIFFRE INTO WS-NUM
-              AT END MOVE 'Y' TO WS-EOF
-              NOT AT END IF WS-NUM > 99
-                    MOVE WS-NUM TO WS-CENT(WS-CONTEUR)
-                    ADD 1 TO WS-CONTEUR
+              AT END MOVE 'Y' TO WS-EOF 
+              NOT AT END IF WS-NUM > 250
+                 DISPLAY WS-NUM 
               END-IF
-          *    
-              END-READ
-          *    
            END-PERFORM.
-          * 
            CLOSE CHIFFRE.
-          * 
-           MOVE WS-CONTEUR TO WS-CONTEUR-FIN.
-          * 
-           MOVE 1 TO WS-CONTEUR.
-          * 
-           PERFORM UNTIL WS-CONTEUR = WS-CONTEUR-FIN
-              DISPLAY WS-CENT(WS-CONTEUR), SPACE, SPACE
-              ADD 1 TO WS-CONTEUR
-           END-PERFORM.
-          * 
            STOP RUN.
