@@ -1,4 +1,4 @@
-IDENTIFICATION                            DIVISION.
+       IDENTIFICATION                            DIVISION.
       ******************************************************************
        PROGRAM-ID. LISTE_ECOLE.
        AUTHOR. KERESTES.
