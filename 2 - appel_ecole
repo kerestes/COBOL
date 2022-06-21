@@ -1,13 +1,14 @@
+      ******************************************************************
+      * Author: KERESTES
+      * Date: JUNE 18, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
        IDENTIFICATION                            DIVISION.
       ******************************************************************
-       PROGRAM-ID. LISTE_ECOLE.
+       PROGRAM-ID. ECOLE_NATATION.
        AUTHOR. KERESTES.
        DATE-WRITTEN. JUNE 18, 2022.
-       ******************************************************************
-      *                                                                *
-      *    LE PROGRAMME RECOIS UNE LISTE DE REGISTRE ET CREE UNE       *
-      *               LISTE D'APPEL PAR AGE                            *
-      *                                                                *
       ******************************************************************
        ENVIRONMENT                               DIVISION.
       ******************************************************************
@@ -43,6 +44,7 @@
               03 LC-JOUR PIC 9(02).
               03 LC-MOIS PIC 9(02).
               03 LC-ANNEE PIC 9(04).
+              03 FILLER   PIC X(22).
       *-----------------------------------------------------------------
        WORKING-STORAGE                   SECTION.
       *-----------------------------------------------------------------
@@ -73,6 +75,9 @@
        01  WS-PHRASE.
            02 WS-PHRASE-1 PIC X(22) VALUE 'LE NOMBRE DELEVE EST '.
            02 WS-CONTEUR PIC 9(2).
+       01  WS-INTERVALLE-AGE.
+           02 WS-AGE-MIN PIC 9(7).
+           02 WS-AGE-MAX PIC 9(7).
       ******************************************************************
        PROCEDURE                                 DIVISION.
       ******************************************************************
@@ -84,107 +89,41 @@
            PERFORM 6 TIMES
               EVALUATE WS-VAR
                  WHEN 1
-                    OPEN INPUT REGISTRES
+                    MOVE 0 TO WS-AGE-MIN
+                    MOVE 1824 TO WS-AGE-MAX
                     MOVE 'BABY' TO WS-CLASSE
                     MOVE 'LUNDI ET MERCREDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE < 1824
-                       ADD 1 TO WS-CONTEUR
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                  WHEN 2
-                    OPEN INPUT REGISTRES
+                    MOVE 1824 TO WS-AGE-MIN 
+                    MOVE 2919 TO WS-AGE-MAX 
                     MOVE 'INFANTILE 1' TO WS-CLASSE
                     MOVE 'MARDI ET JEUDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE > 1824 AND < 2919 
-                       ADD 1 TO WS-CONTEUR
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                  WHEN 3
-                    OPEN INPUT REGISTRES
+                    MOVE 2919 TO WS-AGE-MIN
+                    MOVE 4379 TO WS-AGE-MAX
                     MOVE 'INFANTILE 2' TO WS-CLASSE
                     MOVE 'MERCREDI ET VENDREDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE > 2919 AND < 4379
-                       ADD 1 TO WS-CONTEUR 
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                  WHEN 4
-                    OPEN INPUT REGISTRES
+                    MOVE 4379 TO WS-AGE-MIN
+                    MOVE 5109 TO WS-AGE-MAX
                     MOVE 'JUVENILE 1' TO WS-CLASSE
                     MOVE 'MARDI ET SAMEDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE > 4379 AND < 5109
-                       ADD 1 TO WS-CONTEUR 
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                  WHEN 5
-                    OPEN INPUT REGISTRES
+                    MOVE 5109 TO WS-AGE-MIN
+                    MOVE 6569 TO WS-AGE-MAX
                     MOVE 'JUVENIL 2' TO WS-CLASSE
                     MOVE 'LUNDI ET SAMEDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE > 5109 AND < 6569
-                       ADD 1 TO WS-CONTEUR 
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                  WHEN 6
-                    OPEN INPUT REGISTRES
+                    MOVE 6569 TO WS-AGE-MIN
+                    MOVE 70001 TO WS-AGE-MAX
                     MOVE 'ADULTE' TO WS-CLASSE
                     MOVE 'JEUCI ET VENDREDI' TO WS-JOUR-S
-                    PERFORM WRITE1
-                    PERFORM READ-REC
-                    PERFORM UNTIL WS-FLAG = 'Y'
-                    PERFORM CALCUL-AGE
-                    IF WS-AGE > 6569
-                       ADD 1 TO WS-CONTEUR 
-                       PERFORM MOVE-WRITE
-                    END-IF
-                    PERFORM READ-REC
-                    END-PERFORM
-                    WRITE CLASSES FROM WS-PHRASE 
-                    MOVE 0 TO WS-CONTEUR
-                    CLOSE REGISTRES
+                    PERFORM ROUTINE-PRINCIPAL
                END-EVALUATE
               MOVE SPACES TO CLASSES
               WRITE CLASSES AFTER ADVANCING 1 LINES
@@ -196,28 +135,56 @@
       *
            STOP RUN.
       *     
-       MOVE-WRITE.
+       ROUTINE-PRINCIPAL                 SECTION.
+           OPEN INPUT REGISTRES
+               PERFORM WRITE1
+               PERFORM READ-REC
+               PERFORM UNTIL WS-FLAG = 'Y'
+                  PERFORM CALCUL-AGE
+                  IF WS-AGE > WS-AGE-MIN AND < WS-AGE-MAX
+                     ADD 1 TO WS-CONTEUR
+                     PERFORM MOVE-WRITE
+                  END-IF
+                  PERFORM READ-REC
+               END-PERFORM
+               WRITE CLASSES FROM WS-PHRASE 
+               MOVE 0 TO WS-CONTEUR
+               CLOSE REGISTRES.
+       ROUTINE-PRINCIPAL-EXIT.
+           EXIT.
+      * 
+       MOVE-WRITE                        SECTION.
            MOVE NOM2 TO WS-NOM2
            MOVE R-JOUR  TO WS-JOUR-REG 
            MOVE R-MOIS  TO WS-MOIS-REG 
            MOVE R-ANNEE  TO WS-ANNEE-REG 
            WRITE CLASSES FROM WS-REG.
+       MOVE-WRITE-EXIT.
+           EXIT.
+       
       *
-       WRITE1. 
+       WRITE1                            SECTION. 
            WRITE CLASSES FROM WS-TETE-1
            WRITE CLASSES FROM WS-TETE-2
            MOVE SPACES TO CLASSES
            WRITE CLASSES AFTER ADVANCING 1 LINES.
+       WRITE1-EXIT.
+           EXIT.
       *
-       READ-REC.
+       READ-REC                          SECTION.
            READ REGISTRES
            AT END MOVE 'Y' TO WS-FLAG
            END-READ.
+       READ-REC-EXIT.
+           EXIT.
       *    
-       CALCUL-AGE.
+       CALCUL-AGE                        SECTION.
            MOVE R-JOUR TO WS-JOUR
            MOVE R-MOIS TO WS-MOIS
            MOVE R-ANNEE TO WS-ANNEE 
            MOVE WS-DATE-NAISSANCE TO WS-INT-NAS 
            MOVE FUNCTION INTEGER-OF-DATE (WS-INT-NAS) TO WS-INT-NAS
            SUBTRACT WS-INT-NAS FROM WS-INT-AUJ GIVING WS-AGE.
+       CALCUL-AGE-EXIT.
+           EXIT.
+      *
