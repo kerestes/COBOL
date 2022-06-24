@@ -1,0 +1,129 @@
+      ******************************************************************
+      * Author: KERESTES
+      * Date: JUNE 24, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
+      *
+      * LE PROGRAMME TRAITE UN FICHIER ET CREE UN AUTRE FICHIER RANGE
+      *        PAR LES NOMS ET PRENOMS SANS ESPACES ET L'AGE
+      *
+      ******************************************************************
+       IDENTIFICATION                         DIVISION.
+       PROGRAM-ID. CONVERSION-AGE.
+      ******************************************************************
+       ENVIRONMENT                            DIVISION.
+      ******************************************************************
+       INPUT-OUTPUT                  SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL.    
+           SELECT SORTIE ASSIGN TO 'NOM-AGE.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT REGISTRE ASSIGN 
+                    TO 'c:\pro\cobol\db\geracao_auto\exercicio_6.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+      ******************************************************************
+       DATA                                   DIVISION.
+      ******************************************************************
+       FILE                          SECTION.
+      *-----------------------------------------------------------------
+       FD  REGISTRE.
+       01  REG-INFORMATIONS.
+           02 REG-CODE-CLIENT PIC 9(4).
+           02 FILLER PIC X.
+           02 REG-NOM1.
+              03 REG-PRENOM PIC X(10).
+              03 REG-NOM2 PIC X(10).
+           02 REG-ADRESSE PIC X(30).
+           02 REG-TELEPHONE.
+              03 FILLER PIC 9.
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(4).
+              03 FILLER PIC X.
+           02 REG-DATE-NAISSANCE.
+              03 REG-MOIS PIC 9(2).
+              03 FILLER PIC X.
+              03 REG-JOUR PIC 9(2).
+              03 FILLER PIC X.
+              03 REG-ANNEE PIC 9(4).
+           02 REG-VILLE PIC X(15).
+       FD  SORTIE.
+       01  SOR-INFORMATIONS.
+           02 SOR-OUT-NOM PIC 9(30).
+           02 SOR-AGE PIC 9(3).
+      *-----------------------------------------------------------------
+       WORKING-STORAGE SECTION. 
+      *-----------------------------------------------------------------
+       01  WS-EOF PIC X VALUE 'N'.
+       01  WS-ENREGISTRER.           
+           02  WS-NOMCOMPLET PIC X(30).
+           02  WS-AGE PIC 9(3).
+       01  WS-NAISSANCE.
+           02 WS-ANNEE PIC 9(4).
+           02 WS-MOIS PIC 9(2).
+           02 WS-JOUR PIC 9(2).
+       01  WS-TETE.
+           02 FILLER PIC X(30) VALUE "NOM COMPLET".
+           02 FILLER PIC X(15) VALUE "AGE".
+       01  WS-TETE2.
+           02 FILLER PIC X(30) VALUE "---------------------".
+           02 FILLER PIC X(15) VALUE "----------".
+      *-----------------------------------------------------------------
+       PROCEDURE                              DIVISION.
+      ******************************************************************
+           MOVE FUNCTION CURRENT-DATE (1:8) TO WS-NAISSANCE.
+           
+           OPEN INPUT REGISTRE.
+           OPEN OUTPUT SORTIE.
+
+           WRITE SOR-INFORMATIONS FROM WS-TETE.
+           WRITE SOR-INFORMATIONS FROM WS-TETE2.
+
+           PERFORM 0003-TRAITEMENT.
+
+           CLOSE REGISTRE.
+           CLOSE SORTIE.
+
+           STOP RUN.
+      ******************************************************************        
+       0001-CREER-NOM                SECTION.    
+           STRING REG-PRENOM DELIMITED BY SPACE 
+                  " " DELIMITED BY SIZE
+                  REG-NOM2 DELIMITED BY SPACE 
+                  INTO WS-NOMCOMPLET.
+       0001-CREER-NOM-EXIT.
+           EXIT.
+      ******************************************************************
+      
+      ******************************************************************
+       0002-DECOUVRIR-AGE            SECTION.
+           COMPUTE WS-AGE = WS-ANNEE - REG-ANNEE
+           IF REG-MOIS < WS-MOIS OR (REG-MOIS = WS-MOIS AND 
+                                      REG-JOUR < WS-JOUR)
+                 COMPUTE WS-AGE = WS-AGE - 1
+           END-IF.   
+       0002-DECOUVRIR-AGE-EXIT.
+           EXIT.
+      ******************************************************************
+      
+      ******************************************************************
+       0003-TRAITEMENT              SECTION.
+           READ REGISTRE
+              AT END MOVE 'Y' TO WS-EOF
+           END-READ
+           PERFORM UNTIL WS-EOF = 'Y'
+              PERFORM 0001-CREER-NOM 
+              PERFORM 0002-DECOUVRIR-AGE
+              WRITE SOR-INFORMATIONS FROM WS-ENREGISTRER
+              READ REGISTRE
+                 AT END MOVE 'Y' TO WS-EOF
+              END-READ
+              MOVE SPACES TO WS-ENREGISTRER
+           END-PERFORM.              
+       0003-TRAITEMENT-EXIT.
+           EXIT.
+      ******************************************************************
