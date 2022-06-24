@@ -1,0 +1,185 @@
+******************************************************************
+      * Author: KERESTES
+      * Date: JUNE 23, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
+       IDENTIFICATION                         DIVISION.
+       PROGRAM-ID. SESSENTA_ANOS.
+      ******************************************************************
+       ENVIRONMENT                            DIVISION.
+      ******************************************************************
+       INPUT-OUTPUT                  SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL.    
+           SELECT SOIXANTE ASSIGN TO 'soixante.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT REGISTRE ASSIGN TO 'exercice.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+      ******************************************************************
+       DATA                                   DIVISION.
+      ******************************************************************
+       FILE                          SECTION.
+      *-----------------------------------------------------------------
+       DATA                                   DIVISION.
+      ******************************************************************
+       FILE                          SECTION.
+      *-----------------------------------------------------------------
+       FD  REGISTRE.
+       01  REG-INFORMATIONS.
+           02 REG-CODE-CLIENT PIC 9(4).
+           02 FILLER PIC X.
+           02 REG-NOM1.
+              03 REG-PRENOM PIC X(10).
+              03 REG-NOM2 PIC X(10).
+           02 REG-ADRESSE PIC X(30).
+           02 REG-TELEPHONE.
+              03 FILLER PIC 9.
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(4).
+              03 FILLER PIC X.
+           02 REG-DATE-NAISSANCE.
+              03 REG-MOIS PIC 9(2).
+              03 FILLER PIC X.
+              03 REG-JOUR PIC 9(2).
+              03 FILLER PIC X.
+              03 REG-ANNEE PIC 9(4).
+           02 REG-VILLE PIC X(15).
+       FD  SOIXANTE.
+      01  SOI-INFORMATIONS.
+           02 SOI-CODE-CLIENT PIC 9(4).
+           02 FILLER PIC X.
+           02 SOI-NOM1.
+              03 SOI-PRENOM PIC X(10).
+              03 SOI-NOM2 PIC X(10).
+           02 SOI-ADRESSE PIC X(30).
+           02 SOI-TELEPHONE.
+              03 FILLER PIC 9.
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(3).
+              03 FILLER PIC X.
+              03 FILLER PIC 9(4).
+              03 FILLER PIC X.
+           02 SOI-DATE-NAISSANCE.
+              03 SOI-MOIS PIC 9(2).
+              03 FILLER PIC X.
+              03 SOI-JOUR PIC 9(2).
+              03 FILLER PIC X.
+              03 SOI-ANNEE PIC 9(4).
+           02 SOI-VILLE PIC X(15).
+      *-----------------------------------------------------------------
+       WORKING-STORAGE               SECTION.
+       01  WS-FLAG PIC X.
+       01  WS-LUS PIC 9(3) VALUE ZEROS.
+       01  WS-ENREGISTRES PIC 9(3) VALUE ZEROS.
+       01  WS-NON-ENREG PIC 9(3) VALUE ZEROS.
+       01  WS-DATE-NAIS.
+           02 WS-ANNEE PIC 9(4).
+           02 WS-MOIS PIC 9(2).
+           02 WS-JOUR PIC 9(2).
+       01  WS-INT-NAIS PIC 9(8).
+       01  WS-INT-AUJOURD PIC 9(8).
+       01  WS-INT-AGE PIC 9(8).
+       01  WS-TETE1.
+           02 FILLER PIC X(5) VALUE 'REG'.
+           02 FILLER PIC X(10) VALUE 'PRENOM'.
+           02 FILLER PIC X(10) VALUE 'NOM'.
+           02 FILLER PIC X(30) VALUE 'ADRESSE'.
+           02 FILLER PIC X(14) VALUE 'TELEPHONE'.
+           02 FILLER PIC X(12) VALUE 'NAISSANCE'.
+           02 FILLER PIC X(13) VALUE 'VILLE'.
+       01  WS-TETE2.
+           02 FILLER PIC X(5) VALUE '---'.
+           02 FILLER PIC X(10) VALUE '-------'.
+           02 FILLER PIC X(10) VALUE '-------'.
+           02 FILLER PIC X(30) VALUE '--------------------'.
+           02 FILLER PIC X(14) VALUE '----------'.
+           02 FILLER PIC X(10) VALUE '-------'.
+           02 FILLER PIC X(15) VALUE '----------'.
+       01  WS-PHRASE1 PIC X(23) VALUE ' REGISTRES LUS'.
+       01  WS-PHASE2 PIC x(26) VALUE ' REGISTRES ENREGISTRES'.
+       01  WS-PHASE3 PIC x(30) VALUE ' REGISTROS NON ENREGISTRES'.
+       01  WS-PHASE4.
+           02 WS-NUMERO PIC 9(3).
+           02 WS-PHRASE-R PIC X(30).
+      ******************************************************************
+       PROCEDURE                              DIVISION.
+      ******************************************************************
+           OPEN INPUT REGISTRE.
+           OPEN OUTPUT SOIXANTE.
+           
+           WRITE SOI-INFORMATIONS FROM WS-TETE1.
+           WRITE SOI-INFORMATIONS FROM WS-TETE2.
+           MOVE SPACES TO SOI-INFORMATIONS.
+           WRITE SOI-INFORMATIONS AFTER ADVANCING 1 LINE.
+
+           COMPUTE WS-INT-AUJOURD = FUNCTION INTEGER-OF-DATE
+                                 (FUNCTION CURRENT-DATE (1:8)).
+            
+           
+           PERFORM LECTURE 
+           PERFORM UNTIL WS-FLAG = 'Y'
+              
+              PERFORM CALCUL-AGE
+
+              IF WS-INT-AGE > 21910
+                 WRITE SOI-INFORMATIONS FROM REG-INFORMATIONS
+                 ADD 1 TO WS-ENREGISTRES
+              ELSE
+                 ADD 1 TO WS-NON-ENREG
+              END-IF
+              
+              ADD 1 TO WS-LUS
+           
+              PERFORM LEITURA 
+
+           END-PERFORM.
+
+           MOVE SPACES TO SOI-INFORMATIONS.
+           WRITE SOI-INFORMATIONS AFTER ADVANCING 1 LINE.
+
+           MOVE WS-LUS TO WS-NUMERO.
+           MOVE WS-PHASE1 TO WS-PHASE-R.
+           WRITE SOI-INFORMATIONS FROM WS-PHRASE4.
+
+           MOVE WS-ENREGISTRES  TO WS-NUMERO.
+           MOVE WS-PHRASE2 TO WS-PHRASE-R.
+           WRITE SOI-INFORMATIONS FROM WS-PHRASE4.
+
+           MOVE WS-NON-ENREG  TO WS-NUMERO.
+           MOVE WS-PHRASE3 TO WS-PHRASE-R.
+           WRITE SOI-INFORMATIONS FROM WS-PHRASE4.
+
+           CLOSE SOIXANTE.
+           CLOSE REGISTRE.
+
+           STOP RUN.
+
+      *-----------------------------------------------------------------
+       LECTURE                       SECTION.
+           READ REGISTRE
+               AT END MOVE 'Y' TO WS-FLAG
+           END-READ.
+       LECTURE-EXIT.
+           EXIT.
+      *----------------------------------------------------------------- 
+
+
+      *-----------------------------------------------------------------
+       CALCUL-AGE                 SECTION.
+           MOVE REG-ANNEE TO WS-ANEE
+           MOVE REG-MOIS TO WS-MOIS
+           MOVE REG-JOUR TO WS-JOUR 
+           MOVE WS-DATE-NAIS TO WS-INT-NAIS
+           MOVE FUNCTION INTEGER-OF-DATE (WS-INT-NAIS) 
+                          TO WS-INT-NAIS         
+           COMPUTE WS-INT-AGE = WS-INT-AUJOURD - WS-INT-NAIS.
+      CALCUL-AGE-EXIT.
+           EXIT.
+      *-----------------------------------------------------------------
