@@ -1,0 +1,195 @@
+      ******************************************************************
+      * Author: KERESTES
+      * Date: JUNE 23, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
+      *
+      *    LE PROGRAMME LIT UN FICHIER DE STOCK ET PRODUIT UNE AUTRE 
+      *    FICHIER DE REMPLACEMENT ORDONNE PAR FOURNISSEUR ET AVEC
+      *    LE PRIX DE L'ENSEMBLE DE DU REMPLACEMENT DE CHAQUE PRODUIT
+      *                    ET LE PRIX TOTAL A PAYER
+      *
+      ******************************************************************
+       IDENTIFICATION                                DIVISION.
+      ******************************************************************
+       PROGRAM-ID. GERER_RESERVES.
+      ******************************************************************
+       ENVIRONMENT                                   DIVISION. 
+      ******************************************************************
+       INPUT-OUTPUT                           SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL.
+           SELECT RESERVES ASSIGN 
+                    TO 'c:\pro\cobol\db\geracao_auto\exercicio_11.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT REMPLACEMENT ASSIGN TO 'reposicao.txt'
+           ORGANIZATION IS LINE SEQUENTIAL.
+      ******************************************************************     
+       DATA                                          DIVISION.
+      ******************************************************************
+       FILE                                   SECTION.
+      *-----------------------------------------------------------------
+       FD RESERVES.
+       01  SK-INFORMATIONS.
+           02 SK-CODE PIC 9(3).
+           02 FILLER PIC X.
+           02 SK-PRODUIT PIC X(25).
+           02 SK-QTD-PRODUIT PIC 9(3).
+           02 FILLER PIC X.
+           02 SK-FOURNISSEUR PIC X(17).
+           02 SK-PRIX1 PIC 9(2).
+           02 FILLER PIC X.
+           02 SK-PRIX2 PIC V99.
+       FD REMPLACEMENT.
+       01  RP-INFORMATIONS.
+           02 RP-FOURNISSEUR PIC X(17).
+           02 FILLER PIC X.
+           02 RP-CODE PIC 9(3).
+           02 FILLER PIC X.
+           02 RP-PRODUIT PIC X(25).
+           02 FILLER PIC X(6).
+           02 RP-QTD-PRODUITOTAL PIC 9(3).
+           02 FILLER PIC X(12).
+           02 RP-QTD-PRODUITREMP PIC 9(3).
+           02 FILLER PIC X(5).
+           02 RP-PRIXTOTAL PIC $,$$$,$$9V99.
+      *-----------------------------------------------------------------     
+       WORKING-STORAGE                        SECTION.
+      *-----------------------------------------------------------------
+       01  WS-FLAG PIC X(1) VALUE 'N'.
+       01  WS-QTD-MIN PIC 9(3) VALUE 80.
+       01  WS-ARRAY OCCURS 40.
+           02 WS-FOURNISSEUR PIC X(17).
+           02 FILLER PIC X.
+           02 WS-CODE PIC 9(3).
+           02 FILLER PIC X.
+           02 WS-PRODUIT PIC X(25).
+           02 FILLER PIC X(6).
+           02 WS-QTD-PRODUITOTAL PIC 9(3).
+           02 FILLER PIC X(12).
+           02 WS-QTD-PRODUITREMP PIC 9(3).
+           02 FILLER PIC X(5).
+           02 WS-PRIXTOTAL PIC $$$,$$9.99.
+       01  WS-COMPT PIC 9(2) VALUE 1.
+       01  WS-COMPT2 PIC 9(2) VALUE 1.
+       01  WS-COMPT3 PIC 9(2) VALUE 1.
+       01  TETE1.
+           02 FILLER PIC X(25) VALUE SPACES.
+           02 FILLER PIC X(30) VALUE 'RAPPORT DE REMPLACEMENT'.
+       01  TETE2.
+           02 FILLER PIC X(17) VALUE 'FOURNISSEUR'.
+           02 FILLER PIC X(4) VALUE 'COD'.
+           02 FILLER PIC X(25) VALUE 'PRODUIT'.
+           02 FILLER PIC X(15) VALUE 'QTD EN RESERVE'.
+           02 FILLER PIC X(15) VALUE 'QTD COMMANDE'.
+           02 FILLER PIC X(5) VALUE 'PRIX'.
+       01  TETE3.
+           02 FILLER PIC X(17) VALUE '------------'.
+           02 FILLER PIC X(4) VALUE '---'.
+           02 FILLER PIC X(25) VALUE '------------------'.
+           02 FILLER PIC X(15) VALUE '-------------'.
+           02 FILLER PIC X(15) VALUE '-------------'.
+           02 FILLER PIC X(5) VALUE '-----'.
+       01  WS-CALC-QTD PIC 9(5)V99.
+       01  WS-CALC-VALEUR PIC 9(7)V99.
+       01  WS-CALC-PRIX PIC 9(2)V99.
+       01  WS-BAS1.
+           02 WS-PHRASE1 PIC X(50) VALUE 'LA VALEUR TOTALE POUR FAIRE LE 
+      -                         'REMPLACEMENT EST : '.
+           02 WS-VALEUR-FINALE PIC $,$$$,$$9.99.
+      ******************************************************************
+       PROCEDURE                                   DIVISION.
+      ******************************************************************
+           OPEN INPUT RESERVES.
+           OPEN OUTPUT REMPLACEMENT .
+
+           WRITE RP-INFORMATIONS  FROM TETE1 .
+           MOVE SPACES TO RP-INFORMATIONS
+           WRITE RP-INFORMATIONS AFTER ADVANCING 1 LINE
+           WRITE RP-INFORMATIONS FROM TETE2.
+           WRITE RP-INFORMATIONS FROM TETE3.
+           MOVE SPACES TO RP-INFORMATIONS
+           WRITE RP-INFORMATIONS AFTER ADVANCING 1 LINE
+
+           PERFORM 0001-LECTURE.
+           PERFORM UNTIL WS-FLAG = 'Y'
+              PERFORM 0002-VERIFIE-RESERVE
+              PERFORM 0001-LECTURE
+           END-PERFORM.
+
+           PERFORM VARYING WS-COMPT2 FROM 1 BY 1
+                    UNTIL WS-COMPT2=WS-COMPT
+              MOVE WS-ARRAY(WS-COMPT2) TO RP-INFORMATIONS 
+              WRITE RP-INFORMATIONS
+           END-PERFORM.
+
+           MOVE SPACES TO RP-INFORMATIONS
+           WRITE RP-INFORMATIONS AFTER ADVANCING 1 LINE
+
+           MOVE WS-CALC-VALEUR TO WS-VALEUR-FINALE
+
+           WRITE RP-INFORMATIONS FROM WS-BAS1
+           
+           CLOSE RESERVES 
+           CLOSE REMPLACEMENT 
+
+           STOP RUN.
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       0001-LECTURE                        SECTION.
+      *-----------------------------------------------------------------
+           READ RESERVES
+                 AT END MOVE 'Y' TO WS-FLAG
+           END-READ.
+       0001-LECTURE-EXIT.
+           EXIT.
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       0002-VERIFIE-RESERVE              SECTION.
+      *-----------------------------------------------------------------
+           IF SK-QTD-PRODUIT < WS-QTD-MIN THEN
+              PERFORM VARYING WS-COMPT2 FROM 1 BY 1 UNTIL 
+                      SK-FOURNISSEUR < WS-FOURNISSEUR
+                      OF WS-ARRAY(WS-COMPT2) OR WS-COMPT2 = WS-COMPT
+              END-PERFORM
+
+              IF WS-COMPT2 = WS-COMPT
+                 PERFORM 0003-DEPLACER-WS
+              ELSE
+                 PERFORM VARYING WS-COMPT3 FROM WS-COMPT 
+                         BY -1 UNTIL WS-COMPT3 = WS-COMPT2 
+                         
+                      MOVE WS-ARRAY(WS-COMPT3 - 1) TO 
+                             WS-ARRAY(WS-COMPT3)
+
+                 END-PERFORM
+
+                 PERFORM 0003-DEPLACER-WS
+
+              END-IF
+              COMPUTE WS-CALC-VALEUR  = WS-CALC-VALEUR + 
+                       WS-CALC-QTD
+              COMPUTE WS-COMPT = WS-COMPT + 1
+           END-IF.
+       0002-VERIFIE-RESERVE-EXIT.
+           EXIT.
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       0003-DEPLACER-WS                     SECTION.
+      *-----------------------------------------------------------------
+           MOVE SK-FOURNISSEUR TO WS-FOURNISSEUR(WS-COMPT2)
+           MOVE SK-CODE TO WS-CODE(WS-COMPT2) 
+           MOVE SK-PRODUIT TO WS-PRODUIT(WS-COMPT2) 
+           MOVE SK-QTD-PRODUIT TO WS-QTD-PRODUITOTAL(WS-COMPT2)
+           COMPUTE WS-QTD-PRODUITREMP(WS-COMPT2) = 
+                   150 - WS-QTD-PRODUITOTAL(WS-COMPT2)
+           COMPUTE WS-CALC-PRIX = SK-PRIX1 + SK-PRIX2 
+           COMPUTE WS-CALC-QTD = 
+                 WS-CALC-PRIX * WS-QTD-PRODUITREMP(WS-COMPT2)
+           MOVE WS-CALC-QTD TO WS-PRIXTOTAL(WS-COMPT2)
+           MOVE '0' TO WS-FOURNISSEUR OF WS-ARRAY(WS-COMPT + 1).
+       0003-DEPLACER-WS-EXIT.
+           EXIT.
+      *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
