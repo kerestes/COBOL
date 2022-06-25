@@ -20,8 +20,7 @@
        INPUT-OUTPUT                           SECTION.
       *-----------------------------------------------------------------
        FILE-CONTROL.
-           SELECT RESERVES ASSIGN 
-                    TO 'c:\pro\cobol\db\geracao_auto\exercicio_11.txt'
+           SELECT RESERVES ASSIGN TO 'exercicio_11.txt'
            ORGANIZATION IS LINE SEQUENTIAL.
            SELECT REMPLACEMENT ASSIGN TO 'reposicao.txt'
            ORGANIZATION IS LINE SEQUENTIAL.
