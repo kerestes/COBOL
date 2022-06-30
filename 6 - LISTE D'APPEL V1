@@ -1,0 +1,455 @@
+      ******************************************************************
+      * Author: KERESTES
+      * Date: JUNE 26, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
+      *
+      *  CE PROGRAMME RECOIS UN FICHIER JSON DES TOUS LES ENREGISTREMENT
+      *    D'UNE ECOLE/FAC ET CREE DES SALLE DE 20 ELEVE MAX
+      *            ET CREE AUSSI LA LISTE D'APPEL
+      *
+      ******************************************************************
+       IDENTIFICATION                            DIVISION.
+      ******************************************************************
+       PROGRAM-ID. JSON_CONVERTION.
+      ******************************************************************
+       ENVIRONMENT                               DIVISION.
+      ******************************************************************
+       INPUT-OUTPUT                       SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL.
+           SELECT REGISTRES ASSIGN TO 'registres2.json'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-REGISTRE.
+           SELECT COURS1 ASSIGN TO 'cours1.dat'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-COURS1.
+       DATA                                      DIVISION.
+      ******************************************************************
+       FILE                               SECTION.
+      *-----------------------------------------------------------------
+       FD  REGISTRES.
+       01  JSON-LINE.
+           02 ENTREE PIC X OCCURS 80.
+       FD  COURS1.
+       01  JSON-LINE2.
+           02 SORTIE PIC X(80).
+      * 01  COURS.
+      *     02 C1-CODE-PERSONNEL PIC 9(5).
+      *     02 FILLER PIC X(2).
+      *     02 C1-NOM PIC X(20).
+      *     02 C1-PRENOM PIC X(20).
+      *-----------------------------------------------------------------
+       WORKING-STORAGE                    SECTION.
+      *-----------------------------------------------------------------
+       77  FS-REGISTRE PIC X(2).
+           88 REGISTRE-OK VALUE '00'.
+
+       77  FS-COURS1 PIC X(2).
+           88 COURS1-OK VALUE '00'.
+
+       77  WS-TRAIT PIC X(2).
+           88 TRAIT-OK VALUE '00'.
+           88 FIN-TRAIT VALUE 'FF'.    
+
+       01  WS-EOF PIC X VALUE 'N'.
+       01  WS-EO-JSON-LINE PIC X VALUE 'N'.
+
+
+       01  WS-COMPT PIC 9(2) VALUE 1.
+       01  WS-COMPT2 PIC 9(2) VALUE 1.
+       01  WS-COMPT3 PIC 9(2) VALUE 1.
+       01  WS-COMPT4 PIC 9(4) VALUE 1.
+       01  WS-COMPT5 PIC 9(4) VALUE 1.
+       01  WS-COMPT6 PIC 9(4) VALUE 1.
+
+       01  WS-STRINGT. 
+           02 WS-STRING-TEST PIC X OCCURS 30.
+
+       01  WS-NUMEROT.
+           02 WS-NUMERO-TEST PIC 9 OCCURS 20.
+
+      *     LES VARIABLE QUI SUIVENT FONT REFERENCE AU JSON.
+      * 01  JSON-DOC PIC X(700000).
+      * 01  JSON-DOC-1208 PIC X(700000).
+      
+       01  ENREGISTREMENT. 
+           02 VRAI-ENREGISTREMENT OCCURS 200.
+              03 Code-Personnel PIC 9(5).
+              03 Nom PIC X(20).
+              03 Prenom PIC X(20).
+              03 Email PIC X(40).
+              03 Telephone PIC X(14).
+              03 Data-de-naissance PIC 9(8).
+              03 Cours PIC X(30).
+
+      *       FIN DE VARIABLE JSON.
+
+       01  WS-COURS1.
+           02 WS-COURS2  OCCURS 200.
+              03 WS-COURS PIC X(30).
+              03 WS-ELEVE OCCURS 20.
+                 04 WS-CODE-PERSONNEL PIC 9(5).
+                 04 FILLER PIC X(2).
+                 04 WS-NOM-COMPLET PIC X(40).
+
+       01  WS-TETE-1.
+           02 FILLER PIC X(10).
+           02 FILLER PIC X(6) VALUE 'COURS'.
+
+       01  WS-TETE-2.
+           02 FILLER PIC X(4) VALUE 'CODE'.
+           02 FILLER PIC X(3).
+           02 FILLER PIC X(13) VALUE 'NOM ET PRENOM'.
+
+       01  WS-TETE-3.
+           02 FILLER PIC X(5) VALUE '----'.
+           02 FILLER PIC X(2).
+           02 FILLER PIC X(30) VALUE ALL '-'.
+      ******************************************************************
+       PROCEDURE                                 DIVISION.
+      ******************************************************************
+          
+           PERFORM S0000-INIT.
+           PERFORM S1000-TRAIT-JSON.
+           PERFORM S2000-TRAIT-INTERNE.
+           PERFORM S3000-TRAIT-SORTIE.
+
+           CLOSE REGISTRES.
+           CLOSE COURS1.
+           
+
+           STOP RUN.
+
+      ******************************************************************
+       S0000-INIT                       SECTION.
+           OPEN INPUT REGISTRES.
+      
+           IF NOT REGISTRE-OK 
+              DISPLAY 'Erreur ouverture REGISTRES' FS-REGISTRE
+              MOVE 'FF' TO WS-TRAIT
+           END-IF
+
+           OPEN OUTPUT COURS1.
+
+           IF NOT COURS1-OK  
+              DISPLAY 'Erreur ouverture COURS1' FS-COURS1 
+              MOVE 'FF' TO WS-TRAIT
+           END-IF.
+
+       S0000-INIT-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S1000-TRAIT-JSON                   SECTION.
+                    
+           PERFORM UNTIL WS-EOF = 'Y'
+              READ REGISTRES
+              END-READ
+              IF JSON-LINE = '***'
+                 MOVE 'Y' TO WS-EOF
+              ELSE
+                 PERFORM S1010-CONVERT
+              END-IF
+              MOVE 'N' TO WS-EO-JSON-LINE
+           END-PERFORM.
+
+       S1000-TRAIT-FIN.
+           EXIT.      
+      ******************************************************************     
+
+      ******************************************************************
+       S1010-CONVERT                    SECTION.
+           MOVE SPACE TO WS-STRINGT
+           MOVE ZERO TO WS-NUMEROT
+           PERFORM VARYING WS-COMPT FROM 1 BY 1
+                 UNTIL WS-COMPT = 80 OR WS-EO-JSON-LINE = 'Y'
+              IF ENTREE(WS-COMPT)  = '"'
+                 ADD 1 TO WS-COMPT
+                 MOVE 1 TO WS-COMPT3
+                 PERFORM VARYING WS-COMPT2 FROM WS-COMPT BY 1 UNTIL 
+                          WS-COMPT2 = WS-COMPT + 3
+                    MOVE ENTREE(WS-COMPT2) TO WS-STRING-TEST (WS-COMPT3)
+                    ADD 1 TO WS-COMPT3
+                 END-PERFORM
+                 
+                 EVALUATE WS-STRINGT
+                    WHEN  'Cod'
+                       MOVE 19 TO WS-COMPT
+      *                 MOVE 5 TO WS-COMPT3
+                       PERFORM S1020-FIELD-NUM
+                       MOVE WS-NUMEROT(17:4) TO
+                                 Code-Personnel(WS-COMPT4)
+                       MOVE ZEROS TO WS-NUMEROT
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Nom'
+                       MOVE 8 TO WS-COMPT
+                       PERFORM S1020-FIELD 
+                       MOVE WS-STRINGT TO 
+                             Nom(WS-COMPT4)
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Pre'
+                       MOVE 11 TO WS-COMPT
+                       PERFORM S1020-FIELD 
+                       MOVE WS-STRINGT TO 
+                             Prenom (WS-COMPT4)
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Ema'
+                       MOVE 10 TO WS-COMPT
+                       PERFORM S1020-FIELD 
+                       MOVE WS-STRINGT TO 
+                             Email (WS-COMPT4)
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Tel'
+                       MOVE 14 TO WS-COMPT
+                       PERFORM S1020-FIELD
+                       MOVE WS-STRINGT TO 
+                             Telephone (WS-COMPT4)
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Dat'
+                       MOVE 22 TO WS-COMPT
+                       PERFORM S1020-FIELD
+                       PERFORM S1030-DATA
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                    WHEN 'Cou'
+                       MOVE 10 TO WS-COMPT
+                       PERFORM S1020-FIELD 
+                       MOVE WS-STRINGT TO 
+                             Cours (WS-COMPT4)
+                       ADD 1 TO WS-COMPT4
+                       MOVE SPACES TO WS-STRINGT
+                       MOVE 'Y' TO WS-EO-JSON-LINE
+                 END-EVALUATE
+
+           END-PERFORM.
+       
+       S1010-CONVERT-FIN.    
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S1020-FIELD                         SECTION.
+           MOVE SPACES TO WS-STRINGT 
+           MOVE 1 TO WS-COMPT3
+           PERFORM VARYING WS-COMPT FROM WS-COMPT BY 1
+                    UNTIL ENTREE(WS-COMPT) = '"' 
+              MOVE ENTREE(WS-COMPT) TO WS-STRING-TEST(WS-COMPT3)
+              ADD 1 TO WS-COMPT3
+           END-PERFORM.
+       S1020-FIELD-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S1020-FIELD-NUM                         SECTION.
+           MOVE SPACES TO WS-STRINGT 
+           PERFORM VARYING WS-COMPT FROM WS-COMPT BY 1
+                    UNTIL ENTREE(WS-COMPT) = '"'
+              MOVE ENTREE(WS-COMPT) TO WS-STRING-TEST(WS-COMPT3)
+              ADD 1 TO WS-COMPT3
+           END-PERFORM
+       
+           MOVE 20 TO WS-COMPT5
+           SUBTRACT 1 FROM WS-COMPT3 
+           PERFORM WITH TEST AFTER VARYING WS-COMPT3 FROM WS-COMPT3
+                       BY -1 UNTIL WS-COMPT3=1
+              MOVE WS-STRING-TEST (WS-COMPT3) 
+                       TO WS-NUMERO-TEST(WS-COMPT5)
+              SUBTRACT 1 FROM WS-COMPT5 
+           END-PERFORM.
+          
+       S1020-FIELD-NUM-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S1030-DATA                         SECTION.
+     
+           MOVE 1 TO WS-COMPT2
+           IF WS-STRING-TEST (2)  = '/' AND
+                           WS-STRING-TEST (5) = '/'
+                    MOVE 0 TO  WS-NUMERO-TEST (1)
+                    MOVE 2 TO WS-COMPT2
+                    PERFORM VARYING WS-COMPT FROM 1 BY 1
+                                   UNTIL WS-COMPT = 9
+                       IF WS-STRING-TEST (WS-COMPT) IS NUMERIC 
+                          MOVE WS-STRING-TEST (WS-COMPT) TO 
+                          WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                         END-IF
+                    END-PERFORM
+                    MOVE WS-NUMEROT TO Data-de-naissance(WS-COMPT4)
+           ELSE IF WS-STRING-TEST (3) = '/' AND 
+                          WS-STRING-TEST (5) = '/'
+                    PERFORM VARYING WS-COMPT FROM 1 BY 1
+                                   UNTIL WS-COMPT = 9
+                       IF WS-COMPT2 = 3
+                          MOVE 0 TO WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                       ELSE IF WS-STRING-TEST (WS-COMPT) IS NUMERIC 
+                          MOVE WS-STRING-TEST (WS-COMPT) TO 
+                          WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                       END-IF
+                    END-PERFORM
+                    MOVE WS-NUMEROT TO Data-de-naissance(WS-COMPT4)
+           ELSE IF WS-STRING-TEST (2) = '/' AND
+                           WS-STRING-TEST (4) = '/'
+                    MOVE 0 TO  WS-NUMERO-TEST (1)
+                    MOVE 2 TO WS-COMPT2
+                    PERFORM VARYING WS-COMPT FROM 1 BY 1
+                                   UNTIL WS-COMPT = 8
+                       IF WS-COMPT2 = 3
+                          MOVE 0 TO WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                       ELSE IF WS-STRING-TEST (WS-COMPT) IS NUMERIC 
+                          MOVE WS-STRING-TEST (WS-COMPT) TO 
+                          WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                       END-IF
+                    END-PERFORM
+                    MOVE WS-NUMEROT TO Data-de-naissance(WS-COMPT4)
+           ELSE
+              PERFORM VARYING WS-COMPT FROM 1 BY 1
+                                   UNTIL WS-COMPT = 10
+                       IF WS-STRING-TEST (WS-COMPT) IS NUMERIC 
+                          MOVE WS-STRING-TEST (WS-COMPT) TO 
+                          WS-NUMERO-TEST(WS-COMPT2)
+                          ADD 1 TO WS-COMPT2
+                       END-IF
+                END-PERFORM 
+                MOVE WS-NUMEROT TO Data-de-naissance(WS-COMPT4)
+           END-IF.
+
+       S1030-DATA-FIN.
+           EXIT.
+      ******************************************************************
+       
+      ******************************************************************
+       S2000-TRAIT-INTERNE          SECTION.
+
+           MOVE 1 TO WS-COMPT2, WS-COMPT3
+           MOVE SPACE TO WS-COURS1
+           PERFORM WITH TEST AFTER VARYING WS-COMPT FROM 1 BY 1 
+                    UNTIL WS-COMPT = WS-COMPT4
+              IF WS-COMPT = 1
+                 PERFORM S2010-INTERNE-MOVE-TOUT
+              ELSE
+
+                 PERFORM VARYING WS-COMPT3 FROM 1 BY 1 
+                          UNTIL WS-COURS(WS-COMPT3) >= Cours (WS-COMPT)
+                          OR WS-COURS(WS-COMPT3)=SPACE
+                 END-PERFORM
+
+                 MOVE WS-COMPT TO WS-COMPT5
+                 ADD 1 TO WS-COMPT5
+                 MOVE WS-COMPT3 TO WS-COMPT6
+                 
+                 IF WS-COURS(WS-COMPT3) = Cours (WS-COMPT)
+                    PERFORM VARYING WS-COMPT3 FROM WS-COMPT3 BY 1
+                          UNTIL WS-COURS(WS-COMPT3) NOT =
+                             WS-COURS(WS-COMPT6)
+                    END-PERFORM
+                    SUBTRACT 1 FROM WS-COMPT3
+                    PERFORM VARYING WS-COMPT2 FROM 1 BY 1
+                           UNTIL WS-ELEVE(WS-COMPT3, WS-COMPT2) = SPACE 
+                            OR WS-COMPT2 > 20
+                    END-PERFORM
+                    IF WS-COMPT > 20
+                       PERFORM WITH TEST AFTER VARYING WS-COMPT2 
+                             FROM WS-COMPT BY -1 
+                             UNTIL WS-COMPT2 = WS-COMPT3 
+                          MOVE WS-COURS2(WS-COMPT2) 
+                               TO WS-COURS2(WS-COMPT5)
+                          SUBTRACT 1 FROM WS-COMPT5
+                       END-PERFORM
+                       MOVE 1 TO WS-COMPT2
+                       PERFORM S2010-INTERNE-MOVE-TOUT
+                    ELSE 
+                       PERFORM S2020-INTERNE-MOVE
+                    END-IF
+                 ELSE
+                    IF WS-COMPT3 NOT = WS-COMPT
+                       PERFORM WITH TEST AFTER VARYING WS-COMPT2 
+                               FROM WS-COMPT BY -1  
+                               UNTIL WS-COMPT2=WS-COMPT3 
+                          MOVE WS-COURS2(WS-COMPT2) 
+                               TO WS-COURS2(WS-COMPT5)
+                          SUBTRACT 1 FROM WS-COMPT5
+                       END-PERFORM
+                    END-IF
+                 
+                 MOVE 1 TO WS-COMPT2
+                 PERFORM S2010-INTERNE-MOVE-TOUT 
+
+                END-IF        
+            END-IF 
+
+           END-PERFORM.
+
+       S2000-TRAIT-INTERNE-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S2010-INTERNE-MOVE-TOUT           SECTION.
+           
+           MOVE Cours(WS-COMPT) to WS-COURS(WS-COMPT3)
+           STRING Nom (WS-COMPT) DELIMITED BY SPACE 
+                  ' ' DELIMITED BY SIZE 
+                  Prenom (WS-COMPT) DELIMITED BY SPACE 
+                  INTO WS-NOM-COMPLET (WS-COMPT3, WS-COMPT2)
+           MOVE Code-Personnel(WS-COMPT) 
+                    TO WS-CODE-PERSONNEL(WS-COMPT3, WS-COMPT2).
+
+       S2010-INTERNE-MOVE-TOUT-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S2020-INTERNE-MOVE          SECTION.
+           
+           STRING Nom (WS-COMPT) DELIMITED BY SPACE 
+                  ' ' DELIMITED BY SIZE 
+                  Prenom (WS-COMPT) DELIMITED BY SPACE 
+                  INTO WS-NOM-COMPLET (WS-COMPT3, WS-COMPT2)
+           MOVE Code-Personnel(WS-COMPT) 
+                    TO WS-CODE-PERSONNEL(WS-COMPT3, WS-COMPT2).
+
+       S2020-INTERNE-MOVE-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       S3000-TRAIT-SORTIE           SECTION.
+           PERFORM VARYING WS-COMPT FROM 1 BY 1 
+                    UNTIL WS-COURS2(WS-COMPT) = SPACE 
+               WRITE JSON-LINE2 FROM WS-TETE-1 
+               STRING "       " DELIMITED BY SIZE 
+                      WS-COURS(WS-COMPT) DELIMITED BY SPACE 
+                      INTO JSON-LINE2
+               WRITE JSON-LINE2 
+               MOVE SPACE TO JSON-LINE2
+               WRITE JSON-LINE2 AFTER ADVANCING 1 LINE 
+               WRITE JSON-LINE2 FROM WS-TETE-2 
+               WRITE JSON-LINE2 FROM WS-TETE-3 
+               MOVE SPACE TO JSON-LINE2
+               WRITE JSON-LINE2 AFTER ADVANCING 1 LINE 
+               PERFORM WITH TEST AFTER VARYING WS-COMPT2 FROM 1 BY 1 
+                          UNTIL WS-ELEVE(WS-COMPT, WS-COMPT2) = SPACE 
+                 WRITE JSON-LINE2 FROM WS-ELEVE(WS-COMPT, WS-COMPT2)
+               END-PERFORM
+               MOVE SPACE TO JSON-LINE2
+               WRITE JSON-LINE2 AFTER ADVANCING 3 LINE
+           END-PERFORM.
+       S3000-TRAIT-SORTIE-FIN.
+           EXIT.
+      ******************************************************************
