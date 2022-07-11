@@ -1,0 +1,417 @@
+        IDENTIFICATION                                DIVISION.
+      ******************************************************************
+       PROGRAM-ID. CSV-CAD.
+      ******************************************************************
+       ENVIRONMENT                                   DIVISION.
+      ******************************************************************
+       INPUT-OUTPUT                 SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL. 
+           SELECT ENREGISTREMENT ASSIGN TO 'enregistrement.csv'
+                 ORGANIZATION IS LINE SEQUENTIAL
+                 FILE STATUS IS FS-ENREGISTREMENT.
+           SELECT OPTIONAL ENREG-COURS ASSIGN TO 'enreg-cours.dat'
+                 ORGANIZATION IS INDEXED
+                 ACCESS MODE IS DYNAMIC
+                 RECORD KEY IS ID-COURS
+                 ALTERNATE RECORD KEY IS NUM-INSCRIPTION
+                 FILE STATUS IS FS-ENREG-COURS.
+      ******************************************************************
+       DATA                                          DIVISION.
+      ******************************************************************
+       FILE                         SECTION.
+      *-----------------------------------------------------------------
+       FD  ENREGISTREMENT.
+       01  REGISTRE.
+           88 EOF VALUE HIGH-VALUES.
+           02 LIGNE-ENREG  PIC X(160).
+
+       FD  ENREG-COURS.
+       01  LIGNE-RECORD.
+           02 EOF-LIGNE PIC X.
+           02 ID-COURS PIC 9(5).
+           02 NOM-COURS PIC X(30).
+           02 ELEVE OCCURS 20 INDEXED BY I-ELEVE.
+              03 NUM-ELEVE PIC 99.
+              03 NOM-COMPLET PIC X(40).
+              03 NUM-INSCRIPTION PIC 9(5).              
+      *-----------------------------------------------------------------
+       WORKING-STORAGE              SECTION.
+      *-----------------------------------------------------------------
+       01  FS-ENREGISTREMENT PIC 99.
+           88 FS-ENREGISTREMENT-OK VALUE '00'.
+
+       01  FS-ENREG-COURS PIC 99.
+           88 FS-ENREG-COURS-OK VALUE '00'.
+      *    LA CRÉATION D'UN ARCHIVE INDEXED AVEC OPEN I-O,
+      *    RETOUR CC = 05.
+           88 FS-ENREG-COURS-CREE VALUE '05'.
+
+       77  WS-NOUVELLE-CLASSE PIC X VALUE 'N'.
+       77  WS-TEST PIC X.
+
+       77  WS-COMPT1 PIC 9(3).
+       77  WS-COMPT2 PIC 9(3).
+       77  WS-COMPT3 PIC 9(3).
+       77  WS-COMPT-ID PIC 9(5) VALUE 10000.
+
+       01  WS-REGISTRE.
+           02 WS-ID PIC 9(5).
+           02 WS-PRENOM PIC X(20).
+           02 WS-NOM PIC X(20).
+           02 WS-TELEPHONE PIC X(15).
+           02 WS-EMAIL PIC X(35).
+           02 WS-ADRESSE PIC X(30).
+           02 WS-GENRE PIC X(1).
+           02 WS-COURS-NOM PIC X(30).
+
+       01  WS-LISTE-COURS.
+           02 WS-COURS-LISTE OCCURS 1000 INDEXED BY I-COURS.
+              03 WS-ID-COURS PIC 9(5).
+              03 WS-COURS PIC X(30) VALUE SPACES.
+      ******************************************************************
+       PROCEDURE                                     DIVISION.
+      ******************************************************************
+           
+           PERFORM 0100-DEMARRER-ARCHIVE1.
+
+           PERFORM 0200-CREER-LISTE.
+           
+           PERFORM 0300-CREER-ID-COURS.
+
+           CLOSE ENREGISTREMENT 
+
+           PERFORM 0100-DEMARRER-ARCHIVE1.        
+           PERFORM 0100-DEMARRER-ARCHIVE2.
+
+           PERFORM 0400-TRAITEMENT-SORTIE.
+     
+           CLOSE ENREGISTREMENT  
+           CLOSE ENREG-COURS 
+
+           GOBACK.
+      ******************************************************************
+       0100-DEMARRER-ARCHIVE1        SECTION.
+              
+           OPEN INPUT ENREGISTREMENT 
+
+           IF NOT FS-ENREGISTREMENT-OK 
+              DISPLAY "ERREUR DANS L'OUVERTURE DU FICHIER CSV"
+              GOBACK 
+           END-IF.
+
+       0100-DEMARRER-ARCHIVE1-FIM.
+           EXIT.
+      ******************************************************************
+      
+      ******************************************************************
+       0100-DEMARRER-ARCHIVE2        SECTION.
+       
+           OPEN I-O ENREG-COURS  
+
+           IF NOT FS-ENREG-COURS-OK  
+              IF FS-ENREG-COURS-CREE  
+                 DISPLAY 'CREATION DU FICHIER DE SORTIE BIEN EXECUTÉE'
+              ELSE 
+                 DISPLAY "ERREUR DANS L'OUVERTURE DU FICHIER DE SORTIE"
+                 DISPLAY "IL N'Y AURA PAS D'ENREGISTREMENT"
+              END-IF
+           END-IF.
+
+       0100-DEMARRER-ARCHIVE2-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0200-CREER-LISTE           SECTION.
+           
+      *    LE FICHIER ENREGISTREMENT EST LINE SEQUENTIAL
+      *    IL Y A UNE EN-TÊTE DANS LE FICHIER. C'EST POUR ÇA QU'ON FAIT
+      *    LA LECTURE JUSQU'AU RECORD QUI COMMENCE PAR NUMERO. 
+      *    CAR LES RECORDS QUI NOUS SONT IMPORTANTS COMMENCES PAR NUMERO 
+      *    (ID-COURS)
+
+           PERFORM UNTIL LIGNE-ENREG  (1:1) IS NUMERIC
+              READ ENREGISTREMENT 
+                 AT END SET EOF TO TRUE 
+              END-READ
+           END-PERFORM
+           
+           PERFORM UNTIL EOF
+
+              PERFORM 0201-LECTURE-BUFFER
+              PERFORM 0202-LISTE-COURS
+              
+              READ ENREGISTREMENT 
+                 AT END SET EOF TO TRUE 
+              END-READ
+           END-PERFORM.
+
+       0200-CREER-LISTE-FIM.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0201-LECTURE-BUFFER          SECTION.      
+
+      *   LA LECTURE EST SEQUENTIAL. DANS LE FICHIER CSV LES CHAMPS SONT 
+      *   SEPARÉS PAR VIRGULE. DONC LE PROGRAMME CHERCHE LA VIRGULE
+      *   DE QU'IL LA RETROUVE IL PASSE AU PROCHAIN REGISTRE.
+
+           MOVE 1 TO WS-COMPT1 
+           MOVE 1 TO WS-COMPT2  
+           MOVE SPACES TO WS-REGISTRE  
+
+           PERFORM UNTIL LIGNE-ENREG (WS-COMPT1: 5) = SPACES
+              MOVE 1 TO WS-COMPT3
+              PERFORM VARYING WS-COMPT1 FROM WS-COMPT1 BY 1
+                       UNTIL LIGNE-ENREG (WS-COMPT1: 1) = ',' OR 
+                       LIGNE-ENREG (WS-COMPT1: 5) = SPACES
+                 EVALUATE WS-COMPT2 
+                    WHEN 1
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-ID (WS-COMPT3: 1)
+                    WHEN 2
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-PRENOM (WS-COMPT3: 1)
+                    WHEN 3
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-NOM (WS-COMPT3: 1)
+                    WHEN 4
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-TELEPHONE (WS-COMPT3: 1)
+                    WHEN 5
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-EMAIL (WS-COMPT3: 1)
+                    WHEN 6
+      
+      *    L'ADRESSE EST UN CAS PARTICULIER PARCE QU'IL PORTE DE LA 
+      *    VIRGULE DANS SA STRUCTURE. L'EXCEL EST PROGRAMMÉ POUR LIRE 
+      *    CE QU'IL VIENT ENTRE GUILLEMENT COMME UN SEUL REGISTRE.
+      *    IL FAUT FAIRE LE MÊME ICI. AJOUTER LES GUILLEMENT COMME 
+      *    PARAMÈTRES DE RECHERCHES.
+
+                       ADD 1 TO WS-COMPT1
+                       PERFORM VARYING WS-COMPT1 
+                       FROM WS-COMPT1 BY 1
+                       UNTIL LIGNE-ENREG (WS-COMPT1: 1) = '"' 
+                             MOVE LIGNE-ENREG  (WS-COMPT1: 1) TO
+                             WS-ADRESSE (WS-COMPT3: 1)
+                             ADD 1 TO WS-COMPT3
+                       END-PERFORM
+                    WHEN 7
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-GENRE (WS-COMPT3: 1)
+                    WHEN 8
+                       MOVE LIGNE-ENREG (WS-COMPT1: 1) TO
+                            WS-COURS-NOM (WS-COMPT3: 1)
+                 END-EVALUATE
+                 ADD 1 TO WS-COMPT3
+              END-PERFORM
+              ADD 1 TO WS-COMPT1
+              ADD 1 TO WS-COMPT2   
+           END-PERFORM.
+
+       0201-LECTURE-BUFFER-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0202-LISTE-COURS            SECTION.
+
+      *    CETTE SECTION EXISTE POUR RANGER LES COURS EN ORDRER 
+      *    ALPHABÉTIQUE. S'IL N'EST PAS NÉCESSAIRE LE FAIRE ELLE EST 
+      *    INUTILE
+
+      *    J'AURAIS PU RANGER TOUS LES REGISTRE DANS UN ARRAY IMMENSE A
+      *    DEPENDRE DE LA TAILLE DU FICHIER, POUR CETTE RAISON J'AI 
+      *    CHOISI DE CREER UN ARRAY QUI COMPORTE LES NOM DES COURS ET 
+      *    SES ID. 
+ 
+      *    DONC, PAR EXEMPLE, JE NE VAIS PAS CRÉER UN ARRAY DE 10 mil 
+      *    REGISTRES (LE NOMBRE D'ÉLÈVE), MAIS UN ARRAY DE TAILLE 50
+      *    LES NUMBRE DE COURS (PAS DE CLASSE, CHAQUE COURS PEUT AVOIR
+      *    MULTIPLES CLASSES).
+
+           IF WS-LISTE-COURS  (1:1) = SPACE
+              MOVE WS-COURS-NOM  TO WS-COURS (1)
+              SET I-COURS TO 2
+           ELSE
+              PERFORM VARYING WS-COMPT1 FROM 1 BY 1 UNTIL 
+                          WS-COMPT1 = I-COURS OR 
+                          WS-COURS-NOM <= WS-COURS (WS-COMPT1)
+              END-PERFORM
+              IF WS-COMPT1 = I-COURS
+                 MOVE WS-COURS-NOM TO WS-COURS (I-COURS)
+                 SET I-COURS UP BY 1                 
+              ELSE IF WS-COURS-NOM NOT = WS-COURS (WS-COMPT1)
+                 PERFORM VARYING WS-COMPT2 FROM I-COURS BY -1
+                          UNTIL WS-COMPT2 = WS-COMPT1
+                    COMPUTE WS-COMPT3 = WS-COMPT2 - 1
+                    MOVE WS-COURS-LISTE (WS-COMPT3) 
+                             TO WS-COURS-LISTE (WS-COMPT2)
+                 END-PERFORM
+                 MOVE WS-COURS-NOM  TO WS-COURS (WS-COMPT1)
+                 SET I-COURS UP BY 1
+              END-IF 
+           END-IF.
+
+       0202-LISTE-COURS-FIM.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0300-CREER-ID-COURS          SECTION.
+
+      *    LOGIQUE DE L'ID-COURS : PIC 9(5). IL COMMENCE PAR 10000.
+      *    LE COURS SON COMPTE A PARTIR DU 100 ET LES CLASSE ENTRE 1 ET 
+      *    99
+
+      *    DONC UNE ECOLE AVEC 50 COURS ENREGISTRÉS AURA DU COURS 10100
+      *    JUSQU'AU COURS 15000. SI LE COURS 13 POSSÈDE 15 CLASSE LA 
+      *    PREMIÈRE SERA 11300 ET LA DERNIÈRE 11315. DONC, IL Y A LA 
+      *    POSSIBILITÉ D'ENREGISTRE 999 COURS ET 99 CLASSES.
+
+           PERFORM VARYING ID-COURS FROM 1 BY 1 UNTIL  
+                            WS-COURS (ID-COURS) = SPACES
+              ADD 100 TO WS-COMPT-ID
+              MOVE WS-COMPT-ID TO WS-ID-COURS (ID-COURS)              
+           END-PERFORM.
+
+       0300-CREER-ID-COURS-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0400-TRAITEMENT-SORTIE       SECTION.
+
+      *    PARCE QU'ON NE PEUT PAS UTILISER LA FONCTION START AVEC
+      *    DES ARCHIVES SEQUENTIALS IL FAUT LE FERMER ET LE REOUVRIR.
+
+           PERFORM UNTIL LIGNE-ENREG  (1:1) IS NUMERIC
+              READ ENREGISTREMENT 
+                 AT END SET EOF TO TRUE 
+              END-READ
+           END-PERFORM
+
+           PERFORM UNTIL EOF
+              
+              MOVE SPACES TO LIGNE-ENREG  
+              PERFORM 0201-LECTURE-BUFFER
+              PERFORM VARYING I-COURS FROM 1 BY 1
+                       UNTIL WS-COURS (I-COURS)= WS-COURS-NOM 
+              END-PERFORM
+              MOVE WS-ID-COURS (I-COURS) TO ID-COURS
+      
+      *    IL CHERCHE LE COURS PAR LE CODE, S'IL N'EXISTE PAS (INVALID
+      *    KEY) UN NOUVEAU COURS EST CRÉÉ DANS LE NOUVEAU FICHIER
+      *    S'IL EXISTE LE PROGRAMME VERIFIE S'IL Y A 20 ÉLÈVE OU PAS
+      *    S'IL Y EN A IL CRÉE UNE NOUVELLE CLASSE, SINON IL INSÈRE 
+      *    L'ÉLÈVE DANS LA CLASSE QUI N'EST PAS COMPLÈTE.
+
+              READ ENREG-COURS 
+                 KEY IS ID-COURS
+                 INVALID KEY PERFORM 0402-INSERER-COURS
+                 NOT INVALID KEY PERFORM 0403-VERIF-CLASSE
+              END-READ
+
+              READ REGISTRE
+                 AT END SET EOF TO TRUE 
+              END-READ
+           END-PERFORM.
+
+       0400-TRAITEMENT-SORTIE-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0402-INSERER-COURS           SECTION.
+
+           MOVE WS-COURS-NOM  TO NOM-COURS
+
+      *    EOF-LIGNE MARQUE SI LE REGISTRE A 20 ÉLÈVE
+           
+           MOVE 'N' TO EOF-LIGNE
+           MOVE WS-ID TO NUM-INSCRIPTION  (1)
+           MOVE 1 TO NUM-ELEVE (1)
+      
+      *    LA VARIABLE WS-TEST EST IMPORTANT POUR LA CREATION DE 
+      *    NOUVELLES CLASSES D(DÉBUT) F(FIN)
+      
+           MOVE 'D' TO WS-TEST
+           STRING WS-PRENOM DELIMITED BY SPACE 
+                  ' ' DELIMITED BY SIZE 
+                  WS-NOM DELIMITED BY SPACE
+                  INTO NOM-COMPLET (1)
+           WRITE LIGNE-RECORD
+              INVALID KEY DISPLAY 'CLE INVALIDE DU COMMENDE WRITE'
+           END-WRITE.
+       0402-INSERER-COURS-FIM.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       0403-VERIF-CLASSE            SECTION.
+
+           IF EOF-LIGNE = 'Y'
+              PERFORM WITH TEST AFTER VARYING ID-COURS
+                       FROM ID-COURS BY 1 UNTIL EOF-LIGNE = 'N' 
+                         OR WS-TEST = 'D'
+      *
+      *    DANS CE MOMENT WS-TEST JOUE SON RÔLE, LA FONCTION PERFORM VA 
+      *    VÉRIFIER S'IL Y A UNE CLASSE DANS LE COURS QUI N'A PAS 20
+      *    ÉLÈVE (EOF-LIGNE) OU S'IL FAUT CREER UNE NOUVELLE CLASSE
+      *    (INVALID KEY).
+      * 
+                 READ NOM-COURS 
+                    KEY IS ID-COURS
+                    INVALID KEY MOVE 'O' TO WS-NOUVELLE-CLASSE
+                 END-READ
+                 IF WS-NOUVELLE-CLASSE  = 'O'
+                    MOVE SPACES TO LIGNE-RECORD  (7:970)
+                    PERFORM 0402-INSERER-COURS  
+                       MOVE 'N' TO WS-NOUVELLE-CLASSE 
+                 END-IF
+      
+      *    LA VARIABLE WS-TEST RESTE TOUJOUR AVEC LA VALEUR 'F', MAIS 
+      *    DANS L'INSERTION D'UNE NOUVELLE CLASSE ELLE REÇOIS LA VALEUR
+      *    'D' COMME ÇA L'ÉLÈVE N'EST PAS INSÉRÉ DEUX FOIS.
+
+              END-PERFORM
+              IF WS-TEST = 'N'
+                 PERFORM 0404-INSERER-ELEVE  
+              END-IF
+              MOVE 'N' TO WS-TEST        
+           ELSE
+              PERFORM 0404-INSERER-ELEVE         
+           END-IF.
+
+       0403-VERIF-CLASSE-FIM.
+           EXIT. 
+      ******************************************************************
+
+      ******************************************************************
+       0404-INSERER-ELEVE           SECTION.
+           
+           PERFORM VARYING I-ELEVE FROM 1 BY 1 
+                   UNTIL NUM-ELEVE (I-ELEVE ) NOT = I-ELEVE OR 
+                   I-ELEVE = 20
+           END-PERFORM
+
+           IF I-ELEVE = 20
+              MOVE 'Y' TO EOF-LIGNE 
+           END-IF
+
+           MOVE I-ELEVE TO NUM-ELEVE (I-ELEVE)
+           MOVE WS-ID TO NUM-INSCRIPTION (I-ELEVE)
+           STRING WS-PRENOM DELIMITED BY SPACE 
+                  ' ' DELIMITED BY SIZE 
+                  WS-NOM DELIMITED BY SPACE
+                  INTO NOM-COMPLET (I-ELEVE)
+           REWRITE LIGNE-RECORD
+              INVALID KEY DISPLAY 'CLE INVALIDE DU COMMENDE REWRITE'
+           END-REWRITE.
+
+       0404-INSERER-ELEVE-FIN.
+           EXIT.
+      ******************************************************************
