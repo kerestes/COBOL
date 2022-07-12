@@ -50,6 +50,8 @@
        77  WS-NOUVELLE-CLASSE PIC X VALUE 'N'.
        77  WS-TEST PIC X.
 
+       77  FLAG-EOF PIC X VALUE 'N'.
+
        77  WS-COMPT1 PIC 9(3).
        77  WS-COMPT2 PIC 9(3).
        77  WS-COMPT3 PIC 9(3).
@@ -73,20 +75,37 @@
        PROCEDURE                                     DIVISION.
       ******************************************************************
            
-           PERFORM 0100-DEMARRER-ARCHIVE1.
+      *     PERFORM 0100-DEMARRER-ARCHIVE1.
 
-           PERFORM 0200-CREER-LISTE.
+      *     PERFORM 0200-CREER-LISTE.
            
-           PERFORM 0300-CREER-ID-COURS.
+      *     PERFORM 0300-CREER-ID-COURS.
 
-           CLOSE ENREGISTREMENT 
+      *     CLOSE ENREGISTREMENT 
 
-           PERFORM 0100-DEMARRER-ARCHIVE1.        
+      *     PERFORM 0100-DEMARRER-ARCHIVE1.        
            PERFORM 0100-DEMARRER-ARCHIVE2.
+           
+           MOVE 10100 TO ID-COURS
 
-           PERFORM 0400-TRAITEMENT-SORTIE.
+           READ ENREG-COURS 
+              KEY IS ID-COURS
+              INVALID KEY DISPLAY 'ERRO LEITURA 1'
+           END-READ
+
+           PERFORM VARYING ID-COURS FROM ID-COURS BY 1 UNTIL 
+                       FLAG-EOF = 'Y'
+              DISPLAY LIGNE-RECORD 
+              DISPLAY SPACE
+              READ ENREG-COURS
+                 KEY IS ID-COURS
+                 INVALID KEY MOVE 'Y' TO FLAG-EOF 
+              END-READ
+           END-PERFORM
+
+      *     PERFORM 0400-TRAITEMENT-SORTIE.
      
-           CLOSE ENREGISTREMENT  
+      *     CLOSE ENREGISTREMENT  
            CLOSE ENREG-COURS 
 
            GOBACK.
@@ -272,10 +291,10 @@
       *    PREMIÈRE SERA 11300 ET LA DERNIÈRE 11315. DONC, IL Y A LA 
       *    POSSIBILITÉ D'ENREGISTRE 999 COURS ET 99 CLASSES.
 
-           PERFORM VARYING ID-COURS FROM 1 BY 1 UNTIL  
-                            WS-COURS (ID-COURS) = SPACES
+           PERFORM VARYING I-COURS FROM 1 BY 1 UNTIL  
+                            WS-COURS (I-COURS) = SPACES
               ADD 100 TO WS-COMPT-ID
-              MOVE WS-COMPT-ID TO WS-ID-COURS (ID-COURS)              
+              MOVE WS-COMPT-ID TO WS-ID-COURS (I-COURS)      
            END-PERFORM.
 
        0300-CREER-ID-COURS-FIN.
@@ -296,7 +315,7 @@
 
            PERFORM UNTIL EOF
               
-              MOVE SPACES TO LIGNE-ENREG  
+              MOVE SPACES TO LIGNE-RECORD 
               PERFORM 0201-LECTURE-BUFFER
               PERFORM VARYING I-COURS FROM 1 BY 1
                        UNTIL WS-COURS (I-COURS)= WS-COURS-NOM 
@@ -315,7 +334,7 @@
                  NOT INVALID KEY PERFORM 0403-VERIF-CLASSE
               END-READ
 
-              READ REGISTRE
+              READ ENREGISTREMENT
                  AT END SET EOF TO TRUE 
               END-READ
            END-PERFORM.
@@ -363,10 +382,11 @@
       *    ÉLÈVE (EOF-LIGNE) OU S'IL FAUT CREER UNE NOUVELLE CLASSE
       *    (INVALID KEY).
       * 
-                 READ NOM-COURS 
+                 READ ENREG-COURS 
                     KEY IS ID-COURS
                     INVALID KEY MOVE 'O' TO WS-NOUVELLE-CLASSE
                  END-READ
+
                  IF WS-NOUVELLE-CLASSE  = 'O'
                     MOVE SPACES TO LIGNE-RECORD  (7:970)
                     PERFORM 0402-INSERER-COURS  
