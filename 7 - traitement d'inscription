@@ -75,37 +75,20 @@
        PROCEDURE                                     DIVISION.
       ******************************************************************
            
-      *     PERFORM 0100-DEMARRER-ARCHIVE1.
+           PERFORM 0100-DEMARRER-ARCHIVE1.
 
-      *     PERFORM 0200-CREER-LISTE.
-           
-      *     PERFORM 0300-CREER-ID-COURS.
+           PERFORM 0200-CREER-LISTE.
+          
+           PERFORM 0300-CREER-ID-COURS.
 
-      *     CLOSE ENREGISTREMENT 
+           CLOSE ENREGISTREMENT 
 
-      *     PERFORM 0100-DEMARRER-ARCHIVE1.        
+           PERFORM 0100-DEMARRER-ARCHIVE1.        
            PERFORM 0100-DEMARRER-ARCHIVE2.
-           
-           MOVE 10100 TO ID-COURS
 
-           READ ENREG-COURS 
-              KEY IS ID-COURS
-              INVALID KEY DISPLAY 'ERRO LEITURA 1'
-           END-READ
-
-           PERFORM VARYING ID-COURS FROM ID-COURS BY 1 UNTIL 
-                       FLAG-EOF = 'Y'
-              DISPLAY LIGNE-RECORD 
-              DISPLAY SPACE
-              READ ENREG-COURS
-                 KEY IS ID-COURS
-                 INVALID KEY MOVE 'Y' TO FLAG-EOF 
-              END-READ
-           END-PERFORM
-
-      *     PERFORM 0400-TRAITEMENT-SORTIE.
+           PERFORM 0400-TRAITEMENT-SORTIE.
      
-      *     CLOSE ENREGISTREMENT  
+           CLOSE ENREGISTREMENT  
            CLOSE ENREG-COURS 
 
            GOBACK.
