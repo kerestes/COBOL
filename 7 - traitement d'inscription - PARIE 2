@@ -1,12 +1,6 @@
-      ******************************************************************
-      * Author: KERESTES
-      * Date: JULT 14, 2022.
-      * Purpose: EXERCICE
-      * Tectonics: cobc
-      ******************************************************************
        IDENTIFICATION                              DIVISION. 
       ******************************************************************
-       PROGRAM-ID. CREER-APPEL.
+       PROGRAM-ID. CRIAR-CHAMADA.
       ******************************************************************
        ENVIRONMENT                                 DIVISION. 
       ******************************************************************
@@ -14,21 +8,19 @@
       *-----------------------------------------------------------------
        FILE-CONTROL.
 
-           SELECT OPTIONAL ENREG-COURS ASSIGN TO 'enreg-cours.dat'
+           SELECT OPTIONAL REG-COURS ASSIGN TO "enreg-cours.dat"
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS REG-ID-COURS
-           ALTERNATE RECORD KEY IS REG-INSCRIP
-           FILE STATUS IS FS-ENREG-COURS.
+           FILE STATUS IS FS-REG-COURS.
 
-           SELECT OPTIONAL LISTE-D-APPEL ASSIGN TO "LISTE-dappel.dat"
+           SELECT OPTIONAL LISTE-APPEL ASSIGN TO "liste-appel.dat"
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS LISTE-ID-COURS
-           ALTERNATE RECORD KEY IS LISTE-INSCRIP
-           FILE STATUS IS FS-LISTE-D-APPEL.
+           FILE STATUS IS FS-LISTE-APPEL.
 
-           SELECT PRINT-APPEL ASSIGN TO 'print-file.txt'
+           SELECT PRINT-APPEL ASSIGN TO "print-file2.txt"
            ORGANIZATION IS LINE SEQUENTIAL
            FILE STATUS IS FS-PRINT-APPEL.
       
@@ -38,8 +30,8 @@
        FILE                              SECTION.
       *-----------------------------------------------------------------
       
-       FD  ENREG-COURS.
-       01  REG.
+       FD  REG-COURS.
+       01  CAD.
            02 REG-EOF-LIGNE PIC X.
            02 REG-ID-COURS PIC 9(5).
            02 REG-NOM-COURS PIC X(30).
@@ -48,7 +40,7 @@
               03 REG-NOM-COMPLET PIC X(40).
               03 REG-INSCRIP PIC 9(5).
        
-       FD  LISTE-D-APPEL.
+       FD  LISTE-APPEL.
        01  LISTE.
            88 LISTE-EOF VALUE HIGH-VALUES.
            02 LISTE-ID-COURS PIC 9(5).
@@ -59,19 +51,19 @@
               03 LISTE-INSCRIP PIC 9(5).
 
        FD  PRINT-APPEL.
-       01  LIGNE-RECORD PIC X(90).
+       01  LINHA-GRAVACAO PIC X(90).
       *-----------------------------------------------------------------
        WORKING-STORAGE                   SECTION.
       *-----------------------------------------------------------------
 
       *    VARIABLES DE CONTRÔLE D'ERREURS
        
-       01  FS-ENREG-COURS PIC 99.
-           88  FS-ENREG-COURS-OK VALUE '00'.
+       01  FS-REG-COURS PIC 99.
+           88  FS-REG-COURS-OK VALUE '00'.
        
-       01  FS-LISTE-D-APPEL PIC 99.
-           88 FS-LISTE-D-APPEL-OK VALUE '00'.
-           88 FS-LISTE-D-APPEL-CREER VALUE '05'.
+       01  FS-LISTE-APPEL PIC 99.
+           88 FS-LISTE-APPEL-OK VALUE '00'.
+           88 FS-LISTE-APPEL-CRIAR VALUE '05'.
 
        01  FS-PRINT-APPEL PIC 99.
            88 FS-PRINT-APPEL-OK VALUE '00'.
@@ -87,7 +79,7 @@
               03 WS-NOM-COMPLET PIC X(40) VALUE SPACES.
               03 WS-INSCRIPT PIC 9(5).
 
-       01  VECTEUR-RECORD OCCURS 21 INDEXED BY IDX-VECT.
+       01  VECTEUR-RECORD OCCURS 21 INDEXED BY IDX-VET.
            02 VECTEUR-NUMERO-ELEVE PIC 99.
            02 VECTEUR-NOM-COMPLET PIC X(40).
            02 VECTEUR-INSCRIPT PIC 9(5).
@@ -110,7 +102,7 @@
        01  PRINT-CONTROL.
            02 WS-PRINT-PAGES.
               03 FILLER PIC X(35) VALUE SPACES.
-              03 WS-CONT-PAG PIC 9(4) VALUE 1.
+              03 WS-COMPT-PAGE PIC 9(4) VALUE 1.
        
        01  PRINT-TETE-1.
            02 FILLER PIC X(28) VALUE SPACES.
@@ -127,7 +119,7 @@
            02 FILLER PIC X(10) VALUE 'NUMERO'.
            02 FILLER PIC X(10) VALUE SPACES.
            02 FILLER PIC X(40) VALUE 'NOM COMPLET'.
-           02 FILLER PIC x(12) VALUE 'INSCRIPTION'.
+           02 FILLER PIC x(11) VALUE 'INSCRIPTION'.
 
        01  PRINT-TETE-4.
            02 FILLER PIC X(5) VALUE SPACES.
@@ -136,12 +128,12 @@
            02 FILLER PIC X(40) VALUE '---------------------'.
            02 FILLER PIC x(10) VALUE '----------'.
 
-       01  PRINT-INFO-ELEVES.
+       01  PRINT-INFO-ELEVE.
            02 FILLER PIC X(5) VALUE SPACES.
            02 PRINT-NUMERO PIC 9(5).
            02 FILLER PIC X(15) VALUE SPACES.
            02 PRINT-NOM-COMP PIC X(40).
-           02 PRINT-INSCRIPT PIC x(10).
+           02 PRINT-INSCRIPTION PIC x(10).
       ******************************************************************
        PROCEDURE                                   DIVISION.
       ******************************************************************
@@ -150,45 +142,45 @@
       *    PAR LE PROGRAMME ANTERIEUR. EN SUPPOSANT UN COURS AVEC 61 
       *    ÉLÈVES, LE PROGRAMME ANTERIEUR A FAIT 4 CLASSE. LES TROIS 
       *    PREMIÈRE AVEC 20 ÉLÈVES ET LA DERNIÈRE AVEC 1. CE PROGRAMME
-      *  FAIT DU ÉQUILIBRAGE DE CLASSES ET LE TRI PAR ORDRE ALPHABETIQUE
+      *  FAIT DU ÉQUILIBRAGE DE CLASSES ET LE TRI PAR ORDRE ALPHABETIQUE 
 
-           PERFORM 01000-DEMARRER-FICHIER1
-           PERFORM 01010-DEMARRER-FICHIER2
+           PERFORM 01000-INICIAR-ARQUIVOS1
+           PERFORM 01010-INICIAR-ARQUIVOS2
 
-           PERFORM 02000-RECORD-SORTIE1
+           PERFORM 02000-GRAVACAO-SAIDA1
 
-           CLOSE ENREG-COURS
+           CLOSE REG-COURS
 
-           PERFORM 01020-DEMARRER-FICHIER3
+           PERFORM 01020-INICIAR-ARQUIVOS3
 
-           PERFORM 03000-RAPPORT-PRINT
+           PERFORM 03000-REALTORIO-IMPRESSAO
 
-           CLOSE LISTE-D-APPEL 
+           CLOSE LISTE-APPEL
            CLOSE PRINT-APPEL
 
            GOBACK.
 
       ******************************************************************
-       01000-DEMARRER-FICHIER1            SECTION.
+       01000-INICIAR-ARQUIVOS1            SECTION.
 
-           OPEN INPUT ENREG-COURS
+           OPEN INPUT REG-COURS
 
-           IF NOT FS-ENREG-COURS-OK 
+           IF NOT FS-REG-COURS-OK 
               DISPLAY "ERREUR D'OUVERTURE DU FICHIER PRIMAIRE"
               GOBACK
            END-IF.
 
-       01000-DEMARRER-FICHIER1-FIM.
+       01000-INICIAR-ARQUIVOS1-FIM.
            EXIT.
       ******************************************************************
 
       ******************************************************************
-       01010-DEMARRER-FICHIER2            SECTION.
+       01010-INICIAR-ARQUIVOS2            SECTION.
 
-           OPEN I-O LISTE-D-APPEL.
+           OPEN I-O LISTE-APPEL.
 
-           IF NOT FS-LISTE-D-APPEL-OK 
-              IF FS-LISTE-D-APPEL-CREER 
+           IF NOT FS-LISTE-APPEL-OK 
+              IF FS-LISTE-APPEL-CRIAR 
                  DISPLAY 'FICHIER BIEN CRÉÉ'
               ELSE
                  DISPLAY "ERREUR D'OUVERTURE DU FICHIER LISTE D'APPEL"
@@ -197,36 +189,36 @@
               END-IF
            END-IF.
 
-       01010-DEMARRER-FICHIER1-FIM.
+       01010-INICIAR-ARQUIVOS1-FIM.
            EXIT.
       ******************************************************************
 
       ******************************************************************
-       01020-DEMARRER-FICHIER3            SECTION.
+       01020-INICIAR-ARQUIVOS3            SECTION.
 
            OPEN OUTPUT PRINT-APPEL.
 
-           IF NOT FS-ENREG-COURS-OK 
+           IF NOT FS-PRINT-APPEL-OK 
               DISPLAY "ERREUR D'OUVERTURE DU FICHIER PRINT"
               GOBACK
            END-IF.
 
-       01020-DEMARRER-FICHIER1-FIM.
+       01020-INICIAR-ARQUIVOS1-FIM.
            EXIT.
       ******************************************************************
 
       ******************************************************************
-       02000-RECORD-SORTIE1              SECTION.
+       02000-GRAVACAO-SAIDA1              SECTION.
            
            MOVE 10100 TO REG-ID-COURS 
-           READ ENREG-COURS 
+           READ REG-COURS 
               KEY IS REG-ID-COURS 
               INVALID KEY DISPLAY 'PROBLÈME DANS LA PREMIÈRE LECTURE'
            END-READ
               
            PERFORM UNTIL LISTE-EOF 
 
-      *   POUR FAIRE DE L'ÉQUILIBRAGE IL FAUT SAVOIR COMBIEN DE CLASSE
+      *    POUR FAIRE DE L'ÉQUILIBRAGE IL FAUT SAVOIR COMBIEN DE CLASSE
       *   ET COMBIEN D'ÉLÈVE DANS LA DERNIER. LA VARIABLE WS-CONTROL
       *   GARDE LA PREMIÈRE CLASSE D'UN COURS E LAISSE LA VARIABLE 
       *   REG-ID PARCOURRIR TOUTES LES CLASSES JUSQU'À LA DERNIÈRE
@@ -237,7 +229,7 @@
                        FROM REG-ID-COURS  BY 1
                        UNTIL WS-EOF = 'I'
               
-                 READ ENREG-COURS 
+                 READ REG-COURS 
                     KEY IS REG-ID-COURS 
                     INVALID KEY MOVE 'I' TO WS-EOF 
                  END-READ
@@ -246,7 +238,7 @@
               MOVE 'N' TO WS-EOF
               SUBTRACT 1 FROM REG-ID-COURS    
 
-              READ ENREG-COURS 
+              READ REG-COURS 
                  KEY IS REG-ID-COURS 
                  INVALID KEY DISPLAY 
                               'ERREUR DE LECTURE DU FICHIER ENREG-COURS'
@@ -256,9 +248,9 @@
       *    ET LA DERNIÈRE CLASSE AU BUFFER L'ÉQUILIBRAGE PEUT COMMENCER
 
               IF REG-ID-COURS (4:2) > ZEROS
-                 PERFORM 02010-EQUILIBRAGE
+                 PERFORM 02010-BALANCEAMENTO
               ELSE 
-                 WRITE LISTE FROM REG
+                 WRITE LISTE FROM CAD
                  MOVE SPACE TO LISTE 
               END-IF
 
@@ -269,7 +261,7 @@
               ADD 100 TO WS-CONTROL-COURS 
               MOVE WS-CONTROL-COURS TO REG-ID-COURS 
               
-                 READ ENREG-COURS 
+                 READ REG-COURS 
                     KEY IS REG-ID-COURS
                     INVALID KEY SET LISTE-EOF TO TRUE
                  END-READ
@@ -277,15 +269,15 @@
 
            END-PERFORM.   
 
-       02000-RECORD-SORTIE1-FIM.
+       02000-GRAVACAO-SAIDA1-FIM.
            EXIT.
       ******************************************************************
 
       ******************************************************************
-       02010-EQUILIBRAGE                SECTION.
+       02010-BALANCEAMENTO                SECTION.
       
            PERFORM VARYING FD-REG FROM 1 BY 1 UNTIL 
-                   REG-NOM-COMPLET (FD-REG) = SPACE
+                    REG-NOM-COMPLET (FD-REG) = SPACE
            END-PERFORM
           
       *    L'INDEX FD-REG GARDE LE PREMIER ESPACE VIDE DE LA CLASSE.
@@ -304,10 +296,10 @@
       *   ET QUI RENVOIE 15. IL NE FAUT PAS QUE L'EQUILIBRAGE SOIT 
       *   PARFAIT. POUR CETTE RAISON ON AJOUTE 1 À LA VARIABLE ET ON 
       *   LA LIMITE LA CRÉATION (WS-COMPT6=18)
- 
+
               ADD 1 TO WS-EQUILIBRAGE
               MOVE FD-REG TO WS-COMPT6
-              SET IDX-VECT TO 1
+              SET IDX-VET TO 1
 
               PERFORM VARYING REG-ID-COURS FROM WS-CONTROL-COURS BY 1 
                        UNTIL REG-ID-COURS (4:2) = (WS-COMPT1) OR 
@@ -322,7 +314,7 @@
       *    ET ENREGISTRE LE FICHIER LISTE-D'APPEL.TXT. IL RÉPÈTE CETTE 
       *    PROCÉDURE JUSQU'À L'AVANT DERNIÈRE CLASSE.
 
-                 READ ENREG-COURS
+                 READ REG-COURS
                     KEY IS REG-ID-COURS 
                     INVALID KEY DISPLAY 
                           'ERREUR 2.1 DE LECTURE DU FICHIER ENREG-COURS'
@@ -333,9 +325,9 @@
                           WS-COMPT6 = 20
 
                     MOVE REG-ELEVE (WS-COMPT3) TO 
-                                       VECTEUR-RECORD (IDX-VECT)
+                                       VECTEUR-RECORD (IDX-VET)
                     MOVE SPACE TO REG-ELEVE (WS-COMPT3)
-                    SET IDX-VECT UP BY 1
+                    SET IDX-VET UP BY 1
                     ADD 1 TO WS-COMPT6
 
                  END-PERFORM
@@ -344,16 +336,18 @@
 
                  MOVE SPACE TO LISTE
                  MOVE WS-LISTE (2:975) TO LISTE
-                 WRITE LISTE
+                 WRITE LISTE 
+                    INVALID KEY DISPLAY 'CLÉ DÉJÀ ENREGISTRÉE (1)'
+                 END-WRITE
                  MOVE SPACES TO WS-LISTE
-                 MOVE SPACE TO REG (7:970)
+                 MOVE SPACE TO CAD (7:970)
                  
               END-PERFORM
       
       *    POUR RÉALISER LE TRAITEMENT DE LA DERNIÈRE CLASSE IL AJOUTE
       *    LE VECTEUR O BUFFER E APRÈS SUIVRE LA MÊME PROCEDURE D'AVANT.
 
-              READ ENREG-COURS 
+              READ REG-COURS 
                  KEY IS REG-ID-COURS 
                  INVALID KEY DISPLAY 
                           'ERREUR 2.2 DE LECTURE DU FICHIER ENREG-COURS'
@@ -371,7 +365,7 @@
                        VECTEUR-NOM-COMPLET (WS-COMPT2) = SPACES
               
                  MOVE VECTEUR-RECORD (WS-COMPT2) TO 
-                                  REG-ELEVE (FD-REG) 
+                                      REG-ELEVE (FD-REG) 
                  MOVE SPACE TO VECTEUR-RECORD (WS-COMPT2)
                  
                  ADD 1 TO WS-COMPT2
@@ -383,6 +377,8 @@
               MOVE SPACE TO LISTE
               MOVE WS-LISTE (2:975) TO LISTE
               WRITE LISTE
+                  INVALID KEY DISPLAY 'CLÉ DÉJÀ ENREGISTRÉE (2)'
+              END-WRITE
               MOVE SPACES TO WS-LISTE
 
            ELSE
@@ -394,7 +390,7 @@
               PERFORM WITH TEST  AFTER VARYING REG-ID-COURS 
                         FROM WS-CONTROL-COURS BY 1 
                         UNTIL REG-ID-COURS (4:2) = WS-COMPT1 
-                READ ENREG-COURS 
+                READ REG-COURS 
                     KEY IS REG-ID-COURS 
                     INVALID KEY DISPLAY 
                           'ERREUR 2.3 DE LECTURE DU FICHIER ENREG-COURS'
@@ -405,12 +401,14 @@
                 MOVE SPACE TO LISTE
                 MOVE WS-LISTE (2:975) TO LISTE
                 WRITE LISTE
+                    INVALID KEY DISPLAY 'CLÉ DÉJÀ ENREGISTRÉE (3)'
+                END-WRITE
                 MOVE SPACES TO WS-LISTE
 
               END-PERFORM
 
            END-IF.
-       02010-EQUILIBRAGE-FIM.
+       02010-BALANCEAMENTO-FIM.
            EXIT.
       ******************************************************************
 
@@ -432,13 +430,13 @@
                  MOVE REG-ELEVE (1) TO WS-ELEVE (1)
               ELSE
                  PERFORM VARYING I-ELEVE-WS FROM 1 BY 1 UNTIL 
-                         REG-NOM-COMPLET (WS-COMPT2) <= 
+                          REG-NOM-COMPLET (WS-COMPT2) <= 
                           WS-NOM-COMPLET (I-ELEVE-WS) OR 
                           WS-NOM-COMPLET (I-ELEVE-WS) = SPACE  
                  END-PERFORM
                  
                  IF WS-NOM-COMPLET (I-ELEVE-WS) = SPACES
-                    MOVE WS-ELEVE (WS-COMPT2) TO 
+                    MOVE REG-ELEVE (WS-COMPT2) TO 
                                          WS-ELEVE (I-ELEVE-WS)
                  ELSE 
                     
@@ -458,7 +456,7 @@
               END-IF      
            END-PERFORM
 
-      *   LES NUMÉROS D'APPEL ATRIBUÉS DANS LE PROGRAMME ANTERIEUR N'ONT
+      *    LES NUMÉROS D'APPEL ATRIBUÉS DANS LE PROGRAMME ANTERIEUR N'ONT
       *   PLUS D'ORDRE. LÀ ON LES REORDONNE. 
 
            PERFORM VARYING I-ELEVE-WS FROM 1 BY 1 UNTIL 
@@ -472,7 +470,7 @@
       ******************************************************************
 
       ******************************************************************
-       03000-RAPPORT-PRINT SECTION.
+       03000-REALTORIO-IMPRESSAO SECTION.
       
       *    LE RAPPORT DES LISTES D'APPEL ET FAIT EN TXT ET D'ACCORD
       *    AVEC LE LAYOUT DE MON LECTEUR PDF. JE METS UNE COPIE DU
@@ -482,9 +480,9 @@
            MOVE SPACES TO LISTE
            MOVE 10100 TO LISTE-ID-COURS    
            
-           READ LISTE-D-APPEL 
+           READ LISTE-APPEL 
               KEY IS LISTE-ID-COURS 
-              INVALID KEY DISPLAY 'LEITURA DA LISTE SEQUENCIAL FALHOU'
+              INVALID KEY DISPLAY 'ÉCHEC DANS LA LECTURE SEQUENTIAL'
            END-READ
 
            PERFORM UNTIL WS-EOF = 'Y'
@@ -492,16 +490,16 @@
               MOVE LISTE-ID-COURS TO WS-TETE-ID-COURS 
               MOVE LISTE-NOM-COURS TO WS-TETE-COURS
 
-              WRITE LIGNE-RECORD FROM PRINT-TETE-1 BEFORE 
+              WRITE LINHA-GRAVACAO FROM PRINT-TETE-1 BEFORE 
               ADVANCING 2 LINES 
 
-              WRITE LIGNE-RECORD FROM PRINT-TETE-2 BEFORE 
+              WRITE LINHA-GRAVACAO FROM PRINT-TETE-2 BEFORE 
               ADVANCING 2 LINES 
 
-              WRITE LIGNE-RECORD FROM PRINT-TETE-3 BEFORE 
+              WRITE LINHA-GRAVACAO FROM PRINT-TETE-3 BEFORE 
               ADVANCING 1 LINES 
 
-              WRITE LIGNE-RECORD FROM PRINT-TETE-4 BEFORE 
+              WRITE LINHA-GRAVACAO FROM PRINT-TETE-4 BEFORE 
               ADVANCING 3 LINES 
 
               PERFORM VARYING WS-COMPT1 FROM 1 BY 1 UNTIL 
@@ -510,30 +508,30 @@
                  MOVE LISTE-NUMERO-ELEVE (WS-COMPT1) TO PRINT-NUMERO
                  MOVE LISTE-NOM-COMPLET (WS-COMPT1) TO 
                                                         PRINT-NOM-COMP
-                 MOVE LISTE-INSCRIP (WS-COMPT1) TO PRINT-INSCRIPT
+                 MOVE LISTE-INSCRIP (WS-COMPT1) TO PRINT-INSCRIPTION
                  
-                 WRITE LIGNE-RECORD FROM PRINT-INFO-ELEVES BEFORE 
+                 WRITE LINHA-GRAVACAO FROM PRINT-INFO-ELEVE BEFORE 
                              ADVANCING 2 LINES 
 
                  IF WS-COMPT1 = 20
-                    WRITE LIGNE-RECORD FROM PRINT-INFO-ELEVES BEFORE 
+                    WRITE LINHA-GRAVACAO FROM PRINT-INFO-ELEVE BEFORE 
                     ADVANCING 10 LINES 
                  END-IF 
 
               END-PERFORM   
 
-              WRITE LIGNE-RECORD FROM WS-PRINT-PAGES 
+              WRITE LINHA-GRAVACAO FROM WS-PRINT-PAGES 
                           AFTER ADVANCING 7 LINES
-              Move SPACE TO LIGNE-RECORD
-              WRITE LIGNE-RECORD 
-              ADD 1 TO WS-CONT-PAG  
+              Move SPACE TO LINHA-GRAVACAO
+              WRITE LINHA-GRAVACAO 
+              ADD 1 TO WS-COMPT-PAGE  
                            
-              READ LISTE-D-APPEL NEXT RECORD
+              READ LISTE-APPEL NEXT RECORD
                  AT END MOVE 'Y' TO WS-EOF 
               END-READ
 
            END-PERFORM.
 
-       03000-RAPPORT-PRINT-FIN.
+       03000-REALTORIO-IMPRESSAO-FIN.
            EXIT.
       ******************************************************************
