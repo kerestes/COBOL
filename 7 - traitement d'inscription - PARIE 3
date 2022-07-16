@@ -1,0 +1,373 @@
+      ******************************************************************
+      * Author: KERESTES
+      * Date: JULT 15, 2022.
+      * Purpose: EXERCICE
+      * Tectonics: cobc
+      ******************************************************************
+       IDENTIFICATION                        DIVISION. 
+       PROGRAM-ID. GERANDO_BULLETIN.
+      ******************************************************************
+       ENVIRONMENT                           DIVISION.
+      ******************************************************************
+       INPUT-OUTPUT                   SECTION.
+      *-----------------------------------------------------------------
+       FILE-CONTROL. 
+
+           SELECT OPTIONAL LISTE-APPEL ASSIGN TO "liste-appel.dat"
+           ORGANIZATION IS INDEXED
+           ACCESS MODE IS DYNAMIC
+           RECORD KEY IS LISTE-ID-COURS
+           FILE STATUS IS FS-LISTE-APPEL.
+
+           SELECT XML-NOTE ASSIGN TO "xml-nota.xml"
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-XML-NOTE.
+
+           SELECT PRINT-BULLETIN ASSIGN TO "print-bulletin.txt"
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-PRINT-BULLETIN.
+      ******************************************************************
+       DATA                                  DIVISION.
+      ******************************************************************
+       FILE                           SECTION.
+      *-----------------------------------------------------------------
+       FD  LISTE-APPEL.
+       01  LISTE.
+           88 LISTE-EOF VALUE HIGH-VALUES.
+           02 LISTE-ID-COURS PIC 9(5).
+           02 LISTE-NOM-COURS PIC X(30).
+           02 LISTE-ELEVE OCCURS 20 INDEXED BY FD-LISTE.
+              03 LISTE-NUMERO-ELEVE PIC 99.
+              03 LISTE-NOM-COMPLET PIC X(40).
+              03 LISTE-INSCRIPTION PIC 9(5).
+       
+       FD  XML-NOTE.
+       01  XML-LIGNE PIC X(80).
+
+       FD  PRINT-BULLETIN.
+       01  LIGNE-RECORD PIC X(90).
+      *-----------------------------------------------------------------
+       WORKING-STORAGE                SECTION.
+      *-----------------------------------------------------------------
+
+      *    VARIABLE DE TRAITEMENT DU FICHIER XML
+
+      *   LE DOCUMENT XML PORTE DES NOTES ET LES INSCRIPTIONS DES ELEVES
+
+       01  REGISTRE-ELEVE OCCURS 2000 INDEXED BY I-REG-ELEVE.
+           02 XML-INSCRIPTION PIC 9(5).
+           02 XML-TEST1   PIC 99.
+           02 XML-TEST2   PIC 99.
+           02 XML-TEST3   PIC 99.
+
+       77  WS-EOF PIC X VALUE 'N'.
+
+      *    COMPTEURS
+
+       77  WS-COMPT1 PIC 9(4). 
+       77  WS-COMPT2 PIC 9(5) VALUE 1.
+
+      *    VARIABLES D'ERREURS
+
+       01  FS-LISTE-APPEL PIC 99.
+           88 FS-LISTE-APPEL-OK VALUE '00'.
+
+       01  FS-XML-NOTE PIC 99.
+           88 FS-XML-NOTE-OK VALUE '00'.
+
+       01  FS-PRINT-BULLETIN PIC 99.
+           88 FS-PRINT-BULLETIN-OK VALUE '00'.
+
+      *    VARIABLES D'IMPRESSION
+
+       01  PRINT-CONTROL.
+           02 WS-PRINT-PAGES.
+              03 FILLER PIC X(43) VALUE SPACES.
+              03 WS-CONT-PAG PIC 9(4) VALUE 1.
+       
+       01  PRINT-TETE-1.
+           02 FILLER PIC X(37) VALUE SPACES.
+           02 FILLER PIC X(20) VALUE 'SORBONNE UNIVERSITE'.
+
+       01  PRINT-TETE-2.
+           02 FILLER PIC X(22) VALUE SPACES.
+           02 WS-TETE-ID-COURS PIC X(5).
+           02 FILLER PIC X(35) VALUE SPACES.
+           02 WS-TETE-COURS PIC X(20).
+
+       01  PRINT-TETE-3.
+           02 FILLER PIC X(2) VALUE SPACES.
+           02 FILLER PIC X(6) VALUE 'NUMERO'.
+           02 FILLER PIC X(3) VALUE SPACES.
+           02 FILLER PIC X(30) VALUE 'NOM COMPLET'.
+           02 FILLER PIC x(11) VALUE 'INSCRIPTION'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE 'NOTE 1'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE 'NOTE 2'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE 'NOTE 3'.
+           02 FILLER PIC X(2) VALUE SPACES.
+           02 FILLER PIC X(7) VALUE 'MOYENNE'.
+
+       01  PRINT-TETE-4.
+           02 FILLER PIC X(2) VALUE SPACES.
+           02 FILLER PIC X(6) VALUE '------'.
+           02 FILLER PIC X(3) VALUE SPACES.
+           02 FILLER PIC X(30) VALUE '---------------'.
+           02 FILLER PIC x(11) VALUE '-----------'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE '------'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE '------'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE '------'.
+           02 FILLER PIC XX VALUE SPACES.
+           02 FILLER PIC X(6) VALUE '------'.
+
+       01  PRINT-INFO-ELEVES.
+           02 FILLER PIC X(2) VALUE SPACES.
+           02 PRINT-NUMERO-ELEVE PIC X(6).
+           02 FILLER PIC X(3) VALUE SPACES.
+           02 PRINT-NOM-COMPLET PIC X(30).
+           02 PRINT-INSCRIPTION PIC 9(5).
+           02 FILLER PIC X(6) VALUE SPACES.
+           02 FILLER PIC X(4) VALUE SPACES.
+           02 PRINT-NOTE1 PIC 9(2).
+           02 FILLER PIC X(6) VALUE SPACES.
+           02 PRINT-NOTE2 PIC 9(2).
+           02 FILLER PIC X(6) VALUE SPACES.
+           02 PRINT-NOTE3 PIC 9(2).
+           02 FILLER PIC X(6) VALUE SPACES.
+           02 PRINT-MEDIA PIC 9(2).
+
+      ******************************************************************
+       PROCEDURE                             DIVISION.
+      ******************************************************************
+           PERFORM 01000-OUVRIR-FICHIER1
+
+           PERFORM 01001-OUVRIR-FICHIER2
+
+           PERFORM 02000-TRAITEMENT-XML
+
+           PERFORM 01002-OUVRIR-FICHIER3
+
+           PERFORM 03000-RAPPORT-NOTES
+           
+           CLOSE LISTE-APPEL 
+           CLOSE XML-NOTE 
+           CLOSE PRINT-BULLETIN
+
+           GOBACK.
+
+      ******************************************************************
+       01000-OUVRIR-FICHIER1           SECTION.
+
+           OPEN INPUT LISTE-APPEL 
+
+           IF NOT FS-LISTE-APPEL-OK 
+              DISPLAY "ERREUR D'OUVERTURE DU FICHIER 1"
+           END-IF.
+
+       01000-OUVRIR-FICHIER1-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       01001-OUVRIR-FICHIER2           SECTION.
+
+           OPEN INPUT XML-NOTE 
+
+           IF NOT FS-XML-NOTE-OK 
+              DISPLAY "ERREUR D'OUVERTURE DU FICHIER 2"
+           END-IF.
+
+       01001-OUVRIR-FICHIER2-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       01002-OUVRIR-FICHIER3           SECTION.
+
+           OPEN OUTPUT PRINT-BULLETIN  
+
+           IF NOT FS-PRINT-BULLETIN-OK 
+              DISPLAY "ERREUR D'OUVERTURE DU FICHIER 3"
+           END-IF.
+
+       01002-OUVRIR-FICHIER3-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       02000-TRAITEMENT-XML           SECTION.
+
+           READ XML-NOTE
+              AT END MOVE 'Y' TO WS-EOF
+           END-READ
+           
+      *    LES CHAMPS ET VALEURS SONT ENTOURNÉS DES <> DONC, IL FAUT
+      *    VERIFIER SI LE LA STRING DEDANS CES SYMBOLE C'EST LE CHAMP
+      *    QUI NOUS CHERCHONS ET APRÈS LE PROGRAMME PEUT PRENDRE LA 
+      *    VALEUR QUE VIENT APRÈS.
+
+      *    IL FAUT REMARQUER QUE ICI, LES INSCRIPTION SONT EN ORDRE ET 
+      *    POURTANT L'ARRAY QUI SERA CONÇU PORTERA LES INSCRIPTION 
+      *    EN CORRESPONDANT AVEC SONT INDEX. DANS LES CAS OU IL N'Y
+      *    A PAS DE CORRESPONDANCE IL FAUT ÉCRIRE QUELQUES LIGNES POUR
+      *    IMPOSER LA CORRESPONDANCE ENTRE LE ARRAY ET LE FICHIER LU
+
+           PERFORM UNTIL WS-EOF = 'Y'
+
+              PERFORM VARYING I-REG-ELEVE FROM 1 BY 1 UNTIL 
+                       XML-LIGNE (I-REG-ELEVE:1)= '<'
+              END-PERFORM
+              SET I-REG-ELEVE UP BY 1
+
+              EVALUATE XML-LIGNE(I-REG-ELEVE:6)
+                 WHEN 'Matric' 
+                    SET I-REG-ELEVE UP BY 10
+                    MOVE XML-LIGNE (I-REG-ELEVE:5) TO 
+                             XML-INSCRIPTION (WS-COMPT2) 
+                 WHEN 'Test 1'
+                    SET I-REG-ELEVE UP BY 7
+                    COMPUTE WS-COMPT1 = I-REG-ELEVE + 2
+                    IF XML-LIGNE (WS-COMPT1 : 1) = '<'
+                       MOVE 10 TO XML-TEST1 (WS-COMPT2)
+                    ELSE 
+                       MOVE XML-LIGNE (I-REG-ELEVE:1) TO 
+                             XML-TEST1 (WS-COMPT2)
+                    END-IF  
+                 WHEN 'Test 2'
+                    SET I-REG-ELEVE UP BY 7
+                    COMPUTE WS-COMPT1 = I-REG-ELEVE + 2
+                    IF XML-LIGNE (WS-COMPT1 : 1) = '<'
+                       MOVE 10 TO XML-TEST2 (WS-COMPT2)
+                    ELSE 
+                       MOVE XML-LIGNE (I-REG-ELEVE:1) TO 
+                             XML-TEST2 (WS-COMPT2)
+                    END-IF
+                 WHEN 'Test 3'
+                    SET I-REG-ELEVE UP BY 7
+                    COMPUTE WS-COMPT1 = I-REG-ELEVE + 2
+                    IF XML-LIGNE (WS-COMPT1 : 1) = '<'
+                       MOVE 10 TO XML-TEST3 (WS-COMPT2)
+                    ELSE 
+                       MOVE XML-LIGNE (I-REG-ELEVE:1) TO 
+                             XML-TEST3 (WS-COMPT2)
+                    END-IF 
+                    ADD 1 TO WS-COMPT2 
+              END-EVALUATE
+
+              READ XML-NOTE
+                 AT END MOVE 'Y' TO WS-EOF
+              END-READ
+
+           END-PERFORM.
+       02000-TRAITEMENT-XML-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       03000-RAPPORT-NOTES          SECTION. 
+           
+           MOVE 'N' TO WS-EOF
+
+           READ LISTE-APPEL NEXT RECORD 
+              AT END MOVE 'Y' TO WS-EOF
+           END-READ
+              
+      *    LE SYSTÈME D'IMPRESSION EST BIEN SIMPLE. IL MET EN PAGE LES
+      *    NOTES PAR CLASSES ET APRÈS IL FAIT UN SAUT PAR LA PAGE 
+      *    PROCHAINE LE LAYOUT EST BASÉ SUR LE SYSTÈME PDF DE MON ORDI.
+
+           PERFORM UNTIL WS-EOF = 'Y'
+              MOVE 1 TO WS-COMPT2              
+              PERFORM 03001-GRAVACAO-TETES
+
+              PERFORM VARYING FD-LISTE  FROM 1 BY 1
+                       UNTIL FD-LISTE > 20
+
+                 IF LISTE-NOM-COMPLET (FD-LISTE) NOT = SPACE
+                    
+                    MOVE SPACES TO LIGNE-RECORD
+                    
+                    MOVE ZEROS TO I-REG-ELEVE                  
+                    MOVE LISTE-INSCRIPTION (FD-LISTE) (2:4) 
+                                                        TO WS-COMPT1 
+                    MOVE WS-COMPT1 TO I-REG-ELEVE
+                 
+                    MOVE LISTE-NUMERO-ELEVE (FD-LISTE) 
+                                                  TO PRINT-NUMERO-ELEVE
+                    MOVE LISTE-NOM-COMPLET (FD-LISTE) 
+                                                  TO PRINT-NOM-COMPLET
+                    MOVE LISTE-INSCRIPTION (FD-LISTE) 
+                                                    TO PRINT-INSCRIPTION
+
+                    MOVE XML-TEST1 (I-REG-ELEVE) TO PRINT-NOTE1 
+                    MOVE XML-TEST2 (I-REG-ELEVE) TO PRINT-NOTE2
+                    MOVE XML-TEST3 (I-REG-ELEVE) TO PRINT-NOTE3
+
+                    COMPUTE PRINT-MEDIA = ((PRINT-NOTE3 * 2)+ 
+                             PRINT-NOTE2 + PRINT-NOTE1)/4
+
+                    IF PRINT-MEDIA < 5
+                       ADD 1 TO WS-COMPT2 
+                    END-IF
+
+                    WRITE LIGNE-RECORD FROM PRINT-INFO-ELEVES BEFORE 
+                                                       ADVANCING 2 LINES
+
+                 ELSE
+                    MOVE SPACE TO LIGNE-RECORD 
+                    WRITE LIGNE-RECORD BEFORE ADVANCING 2 LINES
+                 END-IF       
+              END-PERFORM
+              
+              STRING "    LE NUMERO D'ELEVES REJETÉ EST : "
+                      WS-COMPT2 DELIMITED BY SIZE 
+                      INTO LIGNE-RECORD
+              
+              WRITE LIGNE-RECORD 
+              MOVE SPACE TO LIGNE-RECORD 
+
+              WRITE LIGNE-RECORD FROM WS-PRINT-PAGES AFTER ADVANCING 
+                                                                17 LINES
+              MOVE SPACES TO LIGNE-RECORD 
+              WRITE LIGNE-RECORD
+              ADD 1 TO WS-CONT-PAG 
+
+              READ LISTE-APPEL NEXT RECORD 
+                 AT END MOVE 'Y' TO WS-EOF
+              END-READ
+
+           END-PERFORM.
+              
+
+       03000-RAPPORT-NOTES-FIN.
+           EXIT.
+      ******************************************************************
+
+      ******************************************************************
+       03001-GRAVACAO-TETES              SECTION.
+      
+           MOVE SPACES TO LIGNE-RECORD
+           MOVE LISTE-ID-COURS TO WS-TETE-ID-COURS 
+           MOVE LISTE-NOM-COURS TO WS-TETE-COURS 
+           
+           WRITE LIGNE-RECORD FROM PRINT-TETE-1 BEFORE ADVANCING 2
+                                                                 LINES
+
+           MOVE SPACES TO LIGNE-RECORD
+           WRITE LIGNE-RECORD FROM PRINT-TETE-2 BEFORE ADVANCING 2
+                                                                 LINES 
+           MOVE SPACES TO LIGNE-RECORD
+           WRITE LIGNE-RECORD FROM PRINT-TETE-3 BEFORE ADVANCING 1
+                                                                 LINE 
+           MOVE SPACES TO LIGNE-RECORD
+           WRITE LIGNE-RECORD FROM PRINT-TETE-4 BEFORE ADVANCING 2
+                                                                 LINES.
+
+       03001-GRAVACAO-TETES-FIN.
+           EXIT.
+      ******************************************************************
